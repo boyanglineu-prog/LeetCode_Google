@@ -201,6 +201,86 @@ class google {
         }
         return true;
     }
+
+    vector<bool> kidsWithCandies(vector<int>& candies, int extraCandies) {
+        int n = candies.size();
+        vector<bool> ans(n, false);
+        int maxCandy{};
+        for (int i : candies) maxCandy = max(maxCandy, i);
+        for (int i = 0; i < n; ++i)
+            if (candies[i] + extraCandies >= maxCandy) ans[i] = true;
+        return ans;
+    }
+
+    bool kLengthApart(vector<int>& nums, int k) {
+        int l{};
+        while (l < nums.size() && nums[l] == 0) ++l;
+        int r = l + 1;
+        for (; r < nums.size(); ++r) {
+            if (nums[r] == 0) continue;
+            if (r - l - 1 < k) return false;
+            l = r;
+        }
+        return true;
+    }
+
+    vector<int> shuffle(vector<int>& nums, int n) {
+        vector<int> ans(n * 2);
+        for (int i = 0; i < n; ++i) {
+            ans[i * 2] = nums[i];
+            ans[i * 2 + 1] = nums[n + i];
+        }
+        return ans;
+    }
+
+    vector<int> finalPrices(vector<int>& prices) {
+        int n = prices.size();
+        vector<int> ans(n);
+        for (int i = 0; i < n; ++i) {
+            int j = i + 1;
+            for (; j < n; ++j) {
+                if (prices[j] > prices[i]) continue;
+                ans[i] = prices[i] - prices[j];
+                break;
+            }
+            if (j == n) ans[i] = prices[i];
+        }
+        return ans;
+    }
+
+    bool check(vector<int>& nums) {
+        int n = nums.size();
+        int i{};
+        for (; i < n - 1; ++i) {
+            if (nums[i + 1] < nums[i]) break;
+        }
+        if (i == n - 1) return true;
+        ++i;
+        for (; i < n - 1; ++i) {
+            if (nums[i + 1] < nums[i]) break;
+        }
+        if (i != n - 1) return false;
+        return nums[n - 1] <= nums[0];
+    }
+
+    bool checkOnesSegment(string s) {
+        bool seeZero{};
+        for (int i = 1; i < s.length(); ++i) {
+            if (s[i] == '0') {
+                seeZero = true;
+                continue;
+            }
+            if (seeZero && s[i] == '1') return false;
+        }
+        return true;
+    }
+
+    bool canBeEqual(string s1, string s2) {
+        return ((s1[0] == s2[0] && s1[2] == s2[2]) ||
+                (s1[0] == s2[2] && s1[2] == s2[0])) &&
+               ((s1[1] == s2[1] && s1[3] == s2[3]) ||
+                (s1[1] == s2[3] && s1[3] == s2[1]));
+    }
 };
 
 int main() {
