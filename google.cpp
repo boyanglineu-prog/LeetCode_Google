@@ -281,6 +281,137 @@ class google {
                ((s1[1] == s2[1] && s1[3] == s2[3]) ||
                 (s1[1] == s2[3] && s1[3] == s2[1]));
     }
+
+    int scoreOfString(string s) {
+        int ans{};
+        for (int i = 0; i < s.length() - 1; ++i) ans += abs(s[i] - s[i + 1]);
+        return ans;
+    }
+
+    int minimumOperations(vector<int>& nums) {
+        int ans{};
+        for (int num : nums) {
+            ans += num % 3 != 0 ? 1 : 0;
+        }
+        return ans;
+    }
+
+    vector<int> getSneakyNumbers(vector<int>& nums) {
+        vector<bool> seen(nums.size(), false);
+        vector<int> ans;
+        ans.reserve(2);
+        for (int num : nums) {
+            if (seen[num] == true)
+                ans.push_back(num);
+            else
+                seen[num] = true;
+        }
+        return ans;
+    }
+
+    bool hasIncreasingSubarrays(vector<int>& nums, int k) {
+        int n = nums.size();
+        for (int i = 0; i < n - 2 * k + 1; ++i) {
+            bool one = true;
+            for (int j = i; j < i + k - 1; ++j) {
+                if (nums[j + 1] <= nums[j]) {
+                    one = false;
+                    break;
+                }
+            }
+            if (one) {
+                bool two = true;
+                for (int j = i + k; j < i + k + k - 1; ++j) {
+                    if (nums[j + 1] <= nums[j]) {
+                        two = false;
+                        break;
+                    }
+                }
+                if (two) return true;
+            }
+        }
+        return false;
+    }
+
+    int minOperations(vector<int>& nums, int k) {
+        int sum{};
+        for (int num : nums) sum += num;
+        return sum % k;
+    }
+
+    int smallestIndex(vector<int>& nums) {
+        auto digitSum = [](int num) -> int {
+            int sum{};
+            while (num != 0) {
+                sum += num % 10;
+                num /= 10;
+            }
+            return sum;
+        };
+        for (int i = 0; i < nums.size(); ++i) {
+            if (digitSum(nums[i]) == i) return i;
+        }
+        return -1;
+    }
+
+    bool isTrionic(vector<int>& nums) {
+        int n = nums.size();
+        int cur{};
+        while (cur < n - 1) {
+            if (nums[cur + 1] == nums[cur]) return false;
+            if (nums[cur + 1] < nums[cur]) break;
+            ++cur;
+        }
+        if (cur == 0) return false;
+        if (cur == n - 1) return false;
+        while (cur < n - 1) {
+            if (nums[cur + 1] == nums[cur]) return false;
+            if (nums[cur + 1] > nums[cur]) break;
+            ++cur;
+        }
+        if (cur == n - 1) return false;
+        while (cur < n - 1) {
+            if (nums[cur + 1] == nums[cur]) return false;
+            if (nums[cur + 1] < nums[cur]) break;
+            ++cur;
+        }
+        if (cur != n - 1) return false;
+        return true;
+    }
+
+    vector<int> findMissingElements(vector<int>& nums) {
+        int mini = INT_MAX;
+        int maxi = INT_MIN;
+        for (int num : nums) {
+            mini = min(mini, num);
+            maxi = max(maxi, num);
+        }
+        vector<bool> seen(maxi - mini + 1, false);
+        for (int num : nums) {
+            seen[num - mini] = true;
+        }
+        vector<int> ans;
+        for (int i = 0; i < maxi - mini + 1; ++i) {
+            if (seen[i] == false) ans.push_back(i + mini);
+        }
+        return ans;
+    }
+
+    int residuePrefixes(string s) {
+        int ans{};
+        int uniq{};
+        vector<bool> seen(26, false);
+        for (int i = 0; i < s.length(); ++i) {
+            if (seen[s[i] - 'a'] == false) {
+                seen[s[i] - 'a'] = true;
+                ++uniq;
+            }
+            if (uniq == (i + 1) % 3) ans++;
+        }
+        return ans;
+    }
+
+    bool uniformArray(vector<int>& nums) { return true; }
 };
 
 int main() {
