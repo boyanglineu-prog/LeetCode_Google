@@ -412,6 +412,193 @@ class google {
     }
 
     bool uniformArray(vector<int>& nums) { return true; }
+
+    int maxSum(vector<int>& nums) {
+        int n = nums.size();
+        sort(nums.rbegin(), nums.rend());
+        auto lar = [](int num) -> int {
+            int ans{};
+            while (num != 0) {
+                ans = max(ans, num % 10);
+                num /= 10;
+            }
+            return ans;
+        };
+        int ans = -1;
+        vector<vector<int>> indices(10, vector<int>());
+        for (int i = 0; i < n; ++i) {
+            int digit = lar(nums[i]);
+            indices[digit].push_back(i);
+            if (indices[digit].size() == 2)
+                ans =
+                    max(ans, nums[indices[digit][0]] + nums[indices[digit][1]]);
+        }
+        return ans;
+    }
+
+    int reverse(int x) {
+        if (x < 10 && x > -10) return x;
+        if (x == INT_MIN) return 0;  // otherwise abs() will fail
+        bool positive = x > 0;
+        int num = abs(x);
+        int newNum{};
+        while (num != 0) {
+            int digit = num % 10;
+            num /= 10;
+            if (INT_MAX / 10 < newNum) return 0;
+            if (INT_MAX - newNum * 10 < digit) return 0;
+            newNum = newNum * 10 + digit;
+        }
+        return positive ? newNum : -newNum;
+    }
+
+    ListNode* swapPairs(ListNode* head) {
+        if (head == NULL || head->next == NULL) return head;
+        // the first swap is a bit different
+        ListNode* b = head->next;
+        head->next = b->next;
+        b->next = head;
+        head = b;
+        auto swapAfter = [](ListNode* node) -> void {
+            ListNode* a = node->next;
+            ListNode* b = node->next->next;
+            a->next = b->next;
+            b->next = a;
+            node->next = b;
+        };
+        ListNode* node = head->next;
+        while (node->next != NULL && node->next->next != NULL) {
+            swapAfter(node);
+            node = node->next->next;
+        }
+        return head;
+    }
+
+    int divide(int dividend, int divisor) {
+        if (dividend == INT_MIN) {
+            if (divisor == 1) return INT_MIN;
+            if (divisor == -1) return INT_MAX;
+            if (divisor == INT_MIN) return 1;
+        }
+        if (divisor == INT_MIN) return 0;
+        if (divisor == 1) return dividend;
+        if (divisor == -1) return -dividend;
+        bool positive{};
+        if (dividend >= 0 && divisor > 0)
+            positive = true;
+        else if (dividend < 0 && divisor < 0)
+            positive = true;
+        else
+            positive = false;
+        int count{};
+        if (dividend != INT_MIN) {
+            dividend = abs(dividend);
+            divisor = abs(divisor);
+            while (dividend >= divisor) {
+                ++count;
+                dividend -= divisor;
+            }
+        } else if (dividend == INT_MIN) {
+            dividend = INT_MAX;
+            divisor = abs(divisor);
+            ++count;
+            dividend -= divisor;
+            ++dividend;
+            while (dividend >= divisor) {
+                ++count;
+                dividend -= divisor;
+            }
+        }
+        return positive ? count : -count;
+    }
+
+    double myPow(double x, int n) {
+        long long N = n;
+        if (N < 0) {
+            x = 1 / x;
+            N = -N;
+        }
+        double ans = 1.0;
+        double unitProduct = x;
+        while (N > 0) {
+            if (N % 2 == 1) {
+                // if odd, push one unitProduct to ans;
+                ans *= unitProduct;
+            }
+            // remaining part can use binary product
+            unitProduct *= unitProduct;
+            N /= 2;
+        }
+        return ans;
+    }
+
+    int maxSubArray(vector<int>& nums) {
+        // KADANE'S ALGORITHM
+        int curMax{};
+        int maxSoFar = INT_MIN;
+        for (int num : nums) {
+            curMax = max(num, curMax + num);
+            maxSoFar = max(maxSoFar, curMax);
+        }
+        return maxSoFar;
+    }
+
+    vector<vector<int>> insert(vector<vector<int>>& intervals,
+                               vector<int>& newInterval) {
+        // TOO MANY PUSH_BACK AND POP_BACK, CAN IN ONE GO
+        int n = intervals.size();
+        if (n == 0) {
+            intervals.push_back(newInterval);
+            return intervals;
+        }
+        if (newInterval[1] < intervals[0][0]) {
+            intervals.insert(intervals.begin(), newInterval);
+            return intervals;
+        }
+        if (newInterval[0] > intervals[n - 1][1]) {
+            intervals.push_back(newInterval);
+            return intervals;
+        }
+        auto hasOverlap = [&](vector<int>& a, vector<int>& b) -> bool {
+            if (b[0] <= a[0] && b[1] >= a[0] || b[0] <= a[1] && b[1] >= a[1] ||
+                b[0] >= a[0] && b[1] <= a[1]) {
+                return true;
+            }
+            return false;
+        };
+        auto combineIntervals = [&](vector<int>& a,
+                                    vector<int>& b) -> vector<int> {
+            int l = min(a[0], b[0]);
+            int r = max(a[1], b[1]);
+            return {l, r};
+        };
+        vector<vector<int>> ans;
+        int i{};
+        for (; i < n; ++i) {
+            if (hasOverlap(intervals[i], newInterval)) {
+                ans.push_back(combineIntervals(intervals[i], newInterval));
+                ++i;
+                break;
+            }
+            if (intervals[i][0] > newInterval[1]) {
+                ans.push_back(newInterval);
+                ans.push_back(intervals[i]);
+                ++i;
+                break;
+            }
+            ans.push_back(intervals[i]);
+        }
+        for (; i < n; ++i) {
+            vector<int> temp = ans.back();
+            if (hasOverlap(temp, intervals[i])) {
+                ans.pop_back();
+                ans.push_back(combineIntervals(intervals[i], temp));
+                continue;
+            }
+            ans.push_back(intervals[i]);
+        }
+        return ans;
+    }
 };
 
 int main() {
