@@ -141,7 +141,7 @@ class RecentCounter {
 
 class google {
    public:
-    ListNode* deleteDuplicates(ListNode* head) {
+    ListNode* deleteDuplicates_(ListNode* head) {
         ListNode* l = head;
         if (l == NULL) return head;
         ListNode* r = head->next;
@@ -598,6 +598,151 @@ class google {
             ans.push_back(intervals[i]);
         }
         return ans;
+    }
+
+    int uniquePaths(int m, int n) {
+        // BT IS SLOW, DP SHOULD WORK
+        // int count{};
+        // auto bt = [&](auto& self, int row, int col) -> void {
+        //     if (row == m - 1 && col == n - 1) {
+        //         ++count;
+        //     } else if (row == m || col == n) {
+        //     } else {
+        //         self(self, row + 1, col);
+        //         self(self, row, col + 1);
+        //     }
+        //     return;
+        // };
+        // bt(bt, 0, 0);
+        // return count;
+        vector<vector<int>> dp(m, vector<int>(n, 0));
+        for (int i = 0; i < m; ++i) dp[i][0] = 1;
+        for (int j = 0; j < n; ++j) dp[0][j] = 1;
+        for (int i = 1; i < m; ++i) {
+            for (int j = 1; j < n; ++j) {
+                dp[i][j] = dp[i - 1][j] + dp[i][j - 1];
+            }
+        }
+        return dp[m - 1][n - 1];
+    }
+
+    int removeDuplicates(vector<int>& nums) {
+        // TWO POINTERS
+        int n = nums.size();
+        if (n <= 2) return n;
+        int write = 2;
+        int read = 2;
+        for (; read < n; ++read) {
+            if (nums[read] == nums[write - 2]) {
+                // bad read, continue read, but write stays
+                continue;
+            } else {
+                // good read;
+                nums[write++] = nums[read];
+            }
+        }
+        return write;
+        // take away:
+        // 1. the key point is WHY read is compared against write - 2?
+        // if read == write, it's ok, write doesn't matter at all
+        // if read == write - 1, it's ok, it means this number appeared at least
+        // once if read == write - 2, it's NO ok, because now write - 1 and
+        // write - 2 are already this number, we can not assign this number to
+        // write again the logic flow is, we have a new number coming, we need
+        // to check if current position, aka write, can hold this new number or
+        // not, the cretiria is, "already two same numbers?" if can, assign and
+        // move on, both if cannot, just read forward, while write stays
+    }
+
+    ListNode* deleteDuplicates(ListNode* head) {
+        auto nextDistinct = [&](auto& self) -> ListNode* {
+            // if already to the end;
+            ListNode* ans;
+            if (head == NULL || head->next == NULL) {
+                ans = head;
+                head = NULL;  // this is a MUST! otherwise the last node return
+                              // but not move forward
+                return ans;
+            }
+            int tempVal = head->val;
+            // if next val is different, this node is good
+            if (head->next->val != tempVal) {
+                ans = head;
+                head = head->next;
+                return ans;
+            }
+            // if have duplicate value
+            while (head != NULL && head->val == tempVal) {
+                head = head->next;
+            }
+            // if reach here, we have a different val,
+            // BUT we can not return yet, because this new value may have
+            // duplicate behind
+            return self(self);
+        };
+        ListNode preHead(0);
+        ListNode* cur = &preHead;
+        while ((cur->next = nextDistinct(nextDistinct))) cur = cur->next;
+        return preHead.next;
+    }
+
+    ListNode* partition(ListNode* head, int x) {
+        if (head == NULL) return NULL;
+        ListNode preHead1(0);
+        ListNode preHead2(0);
+        ListNode* end1 = &preHead1;
+        ListNode* end2 = &preHead2;
+        auto processNode = [&]() -> void {
+            if (head->val < x) {
+                end1->next = head;
+                end1 = end1->next;
+            } else {
+                end2->next = head;
+                end2 = end2->next;
+            }
+            head = head->next;
+        };
+        while (head) {
+            processNode();
+        }
+        end1->next = preHead2.next;
+        end2->next = NULL;
+        return preHead1.next;
+    }
+
+    ListNode* reverseBetween(ListNode* head, int left, int right) {
+        if (left == right) return head;
+        ListNode preHead(0);
+        preHead.next = head;
+        ListNode* cur = &preHead;
+        for (int i = 0; i < left - 1; ++i) cur = cur->next;
+        ListNode* leftEnd = cur;
+        ListNode* start = leftEnd->next;
+        for (int i = 0; i < right - left + 1; ++i) cur = cur->next;
+        ListNode* end = cur;
+        ListNode* rightStart = cur->next;
+        auto reverseList = [&]() -> void {
+            ListNode* back = start;
+            ListNode* mid = back->next;
+            if (mid == end) {
+                mid->next = back;
+                return;
+            }
+            ListNode* front = mid->next;
+            while (front != end) {
+                mid->next = back;
+                back = mid;
+                mid = front;
+                front = front->next;
+            }
+            // now front == end;
+            mid->next = back;
+            front->next = mid;
+        };
+        reverseList();
+        leftEnd->next = end;
+        start->next = rightStart;
+        return preHead.next;
     }
 };
 
