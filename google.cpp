@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <deque>
 #include <iostream>
 #include <stack>
@@ -10,6 +11,16 @@ struct ListNode {
     ListNode() : val(0), next(nullptr) {}
     ListNode(int x) : val(x), next(nullptr) {}
     ListNode(int x, ListNode* next) : val(x), next(next) {}
+};
+
+struct TreeNode {
+    int val;
+    TreeNode* left;
+    TreeNode* right;
+    TreeNode() : val(0), left(nullptr), right(nullptr) {}
+    TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+    TreeNode(int x, TreeNode* left, TreeNode* right)
+        : val(x), left(left), right(right) {}
 };
 
 class MyStack {
@@ -743,6 +754,154 @@ class google {
         leftEnd->next = end;
         start->next = rightStart;
         return preHead.next;
+    }
+
+    vector<TreeNode*> generateTrees(int n) {
+        // TRAVERSE, PARTITION, AND COMBINE
+        if (n == 1) return {new TreeNode(1)};
+        auto buildTree = [](auto& self, int start,
+                            int end) -> vector<TreeNode*> {
+            if (start > end) return {NULL};
+            vector<TreeNode*> allTreesForThisLevel;
+            for (int i = start; i <= end; ++i) {
+                vector<TreeNode*> leftSubTrees = self(self, start, i - 1);
+                vector<TreeNode*> rightSubTrees = self(self, i + 1, end);
+                for (TreeNode* left : leftSubTrees) {
+                    for (TreeNode* right : rightSubTrees) {
+                        TreeNode* root = new TreeNode(i);
+                        root->left = left;
+                        root->right = right;
+                        allTreesForThisLevel.push_back(root);
+                    }
+                }
+            }
+            return allTreesForThisLevel;
+        };
+        return buildTree(buildTree, 1, n);
+    }
+
+    bool isValidBST(TreeNode* root) {
+        // auto bst = [](auto& self, TreeNode* root) -> bool {
+        //     if (root == NULL) return true;
+        //     return (root->left == NULL || root->left->val < root->val) &&
+        //            (root->right == NULL || root->right->val > root->val) &&
+        //            self(self, root->left) && self(self, root->right);
+        // };
+        // return bst(bst, root);
+        vector<int> flat;
+        auto dfs = [&](auto& self, TreeNode* node) -> void {
+            if (node == NULL) return;
+            self(self, node->left);
+            flat.push_back(node->val);
+            self(self, node->right);
+            return;
+        };
+        dfs(dfs, root);
+        if (flat.size() <= 1) return true;
+        for (int i = 1; i < flat.size(); ++i) {
+            if (flat[i] <= flat[i - 1]) return false;
+        }
+        return true;
+    }
+
+    void recoverTree(TreeNode* root) {
+        // FIND FIRST, THEN RECOVER
+        vector<int> flat;
+        auto dfsFind = [&](auto& self, TreeNode* node) -> void {
+            if (node == NULL) return;
+            self(self, node->left);
+            flat.push_back(node->val);
+            self(self, node->right);
+            return;
+        };
+        dfsFind(dfsFind, root);
+        // step 1, find the samll
+        int n = flat.size();
+        int small{};
+        int big{};
+        for (int i = n - 1; i > 0; --i) {
+            // backward, because there are two "drops" in the list,
+            // what we need is the later one
+            if (flat[i] < flat[i - 1]) {
+                small = flat[i];
+                break;
+            }
+        }
+        for (int i = 1; i < n; ++i) {
+            // backward, because there are two "drops" in the list,
+            // what we need is the later one
+            if (flat[i] < flat[i - 1]) {
+                big = flat[i - 1];
+                break;
+            }
+        }
+        // step 3, recover
+        bool flagSmall{};
+        bool flagBig{};
+        auto dfsRecover = [&](auto& self, TreeNode* node) -> void {
+            if (node == NULL) return;
+            if (flagSmall && flagBig) return;
+            if (node->val == small) {
+                node->val = big;
+                flagSmall = true;
+                if (flagBig) return;
+            } else if (node->val == big) {
+                node->val = small;
+                flagBig = true;
+                if (flagSmall) return;
+            }
+            self(self, node->left);
+            self(self, node->right);
+        };
+        dfsRecover(dfsRecover, root);
+        return;
+        // BST? Flatten it!
+    }
+
+    vector<vector<int>> levelOrder(TreeNode* root) {
+        // BFS, BUT WITH MUTIPLE QUEUE
+        if (root == NULL) return {};
+        vector<vector<TreeNode*>> q;
+        vector<vector<int>> ans;
+        q.push_back({root});
+        int level{};
+        while (true) {
+            // start this level
+            ans.push_back({});  // this level
+            q.push_back({});    // next level
+            for (TreeNode* node : q[level]) {
+                ans[level].push_back(node->val);
+                if (node->left) q[level + 1].push_back(node->left);
+                if (node->right) q[level + 1].push_back(node->right);
+            }
+            ++level;
+            if (q[level].size() == 0) break;
+        }
+        return ans;
+    }
+
+    vector<vector<int>> zigzagLevelOrder(TreeNode* root) {
+        if (root == NULL) return {};
+        vector<vector<TreeNode*>> q;
+        vector<vector<int>> ans;
+        q.push_back({root});
+        int level{};
+        while (true) {
+            // start this level
+            vector<int> thisLevel;
+            q.push_back({});  // next level
+            for (TreeNode* node : q[level]) {
+                thisLevel.push_back(node->val);
+                if (node->left) q[level + 1].push_back(node->left);
+                if (node->right) q[level + 1].push_back(node->right);
+            }
+            if (level % 2 == 1)
+                std::reverse(thisLevel.begin(), thisLevel.end());
+            ans.push_back(thisLevel);
+            ++level;
+            if (q[level].size() == 0) break;
+        }
+        return ans;
     }
 };
 
