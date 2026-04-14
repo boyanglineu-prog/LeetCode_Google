@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stack>
 #include <unordered_map>
+#include <unordered_set>
 using namespace std;
 
 struct ListNode {
@@ -21,6 +22,18 @@ struct TreeNode {
     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
     TreeNode(int x, TreeNode* left, TreeNode* right)
         : val(x), left(left), right(right) {}
+};
+
+class Node {
+   public:
+    int val;
+    Node* left;
+    Node* right;
+    Node* next;
+    Node() : val(0), left(NULL), right(NULL), next(NULL) {}
+    Node(int _val) : val(_val), left(NULL), right(NULL), next(NULL) {}
+    Node(int _val, Node* _left, Node* _right, Node* _next)
+        : val(_val), left(_left), right(_right), next(_next) {}
 };
 
 class MyStack {
@@ -901,6 +914,126 @@ class google {
             ++level;
             if (q[level].size() == 0) break;
         }
+        return ans;
+    }
+
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+        // PREIDX ++, AMAZING, MUST LEFT FIRST
+        int n = preorder.size();
+        unordered_map<int, int> inMap;
+        for (int i = 0; i < n; ++i) inMap[inorder[i]] = i;
+        int preIdx{};
+        auto build = [&](auto& self, int left, int right) -> TreeNode* {
+            if (left > right) return NULL;
+            int rootVal = preorder[preIdx++];
+            TreeNode* root = new TreeNode(rootVal);
+            int split = inMap[rootVal];
+            root->left = self(self, left, split - 1);
+            root->right = self(self, split + 1, right);
+            return root;
+        };
+        return build(build, 0, n - 1);
+        // take away:
+        // 1. use inorder to partition
+        // 2. use preorder to find root
+        // must process left first,
+        // so that preIdx++ logic reains valid
+    }
+
+    TreeNode* sortedListToBST(ListNode* head) {
+        // BUILD = PARTITION +  RECUSION
+        if (head == NULL) return NULL;
+        ListNode* cur = head;
+        int n{};
+        while (cur != NULL) {
+            cur = cur->next;
+            ++n;
+        }
+        cur = head;
+        vector<int> nums(n);
+        for (int i = 0; i < n; ++i) {
+            nums[i] = cur->val;
+            cur = cur->next;
+        }
+        //  now I have a sorted list;
+        auto build = [&](auto& self, int left, int right) -> TreeNode* {
+            if (left > right) return NULL;
+            int mid = left + (right - left) / 2;
+            TreeNode* root = new TreeNode(nums[mid]);
+            TreeNode* leftChild = self(self, left, mid - 1);
+            TreeNode* rightChild = self(self, mid + 1, right);
+            root->left = leftChild;
+            root->right = rightChild;
+            return root;
+        };
+        return build(build, 0, n - 1);
+    }
+
+    vector<vector<int>> pathSum(TreeNode* root, int targetSum) {
+        int sum{};
+        vector<int> run;
+        vector<vector<int>> ans;
+        auto bt = [&](auto& self, TreeNode* node) -> void {
+            if (node == NULL) return;
+            run.push_back(node->val);
+            sum += node->val;
+            if (node->left == NULL && node->right == NULL && sum == targetSum) {
+                vector<int> good(run);
+                ans.push_back(good);
+            }
+            self(self, node->left);
+            self(self, node->right);
+            sum -= node->val;
+            run.pop_back();
+            return;
+        };
+        bt(bt, root);
+        return ans;
+    }
+
+    Node* connect(Node* root) {
+        if (root == NULL) return root;
+        vector<vector<Node*>> layers;
+        layers.push_back({root});
+        int level = 0;
+        while (level < layers.size()) {
+            vector<Node*> nextLevel;
+            vector<Node*>& thisLevel = layers[level];
+            int n = thisLevel.size();
+            for (int i = 0; i < n - 1; ++i) {
+                thisLevel[i]->next = thisLevel[i + 1];
+                if (thisLevel[i]->left != NULL) {
+                    nextLevel.push_back(thisLevel[i]->left);
+                    nextLevel.push_back(thisLevel[i]->right);
+                }
+            }
+            thisLevel[n - 1]->next = NULL;
+            if (thisLevel[n - 1]->left != NULL) {
+                nextLevel.push_back(thisLevel[n - 1]->left);
+                nextLevel.push_back(thisLevel[n - 1]->right);
+            }
+            if (nextLevel.size() != 0) layers.push_back(nextLevel);
+            ++level;
+        }
+        return root;
+    }
+
+    int minimumTotal(vector<vector<int>>& triangle) {
+        int n = triangle.size();
+        vector<vector<int>> memo;
+        memo.push_back(triangle[0]);
+        for (int i = 1; i < n; ++i) {
+            int m = triangle[i].size();
+            vector<int> layer(m);
+            layer[0] = triangle[i][0] + memo[i - 1][0];
+            for (int j = 1; j < m - 1; ++j)
+                layer[j] =
+                    triangle[i][j] + min(memo[i - 1][j - 1], memo[i - 1][j]);
+            layer[m - 1] = triangle[i][m - 1] + memo[i - 1][m - 2];
+            memo.push_back(layer);
+        }
+        int ans = INT_MAX;
+        for (int num : memo[n - 1]) ans = min(ans, num);
         return ans;
     }
 };
