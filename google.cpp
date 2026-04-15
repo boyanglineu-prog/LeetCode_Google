@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <deque>
 #include <iostream>
+#include <list>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
@@ -30,10 +31,19 @@ class Node {
     Node* left;
     Node* right;
     Node* next;
-    Node() : val(0), left(NULL), right(NULL), next(NULL) {}
-    Node(int _val) : val(_val), left(NULL), right(NULL), next(NULL) {}
-    Node(int _val, Node* _left, Node* _right, Node* _next)
-        : val(_val), left(_left), right(_right), next(_next) {}
+    vector<Node*> neighbors;
+    Node() {
+        val = 0;
+        neighbors = vector<Node*>();
+    }
+    Node(int _val) {
+        val = _val;
+        neighbors = vector<Node*>();
+    }
+    Node(int _val, vector<Node*> _neighbors) {
+        val = _val;
+        neighbors = _neighbors;
+    }
 };
 
 class MyStack {
@@ -160,6 +170,42 @@ class RecentCounter {
             break;
         }
         return count;
+    }
+};
+class LRUCache {
+   private:
+    int cap;
+    list<int> q;
+    unordered_map<int, pair<int, list<int>::iterator>> mp;
+
+    void makeMostRecent(int key) {
+        q.erase(mp[key].second);
+        q.push_back(key);
+        mp[key].second = prev(q.end());
+    }
+
+   public:
+    LRUCache(int capacity) : cap(capacity) {}
+
+    int get(int key) {
+        if (mp.find(key) == mp.end()) return -1;
+        makeMostRecent(key);
+        return mp[key].first;
+    }
+
+    void put(int key, int value) {
+        if (mp.find(key) != mp.end()) {
+            mp[key].first = value;
+            makeMostRecent(key);
+            return;
+        }
+        if (mp.size() == cap) {
+            int lru = q.front();
+            mp.erase(lru);
+            q.pop_front();
+        }
+        q.push_back(key);
+        mp[key] = {value, prev(q.end())};
     }
 };
 
@@ -1035,6 +1081,126 @@ class google {
         int ans = INT_MAX;
         for (int num : memo[n - 1]) ans = min(ans, num);
         return ans;
+    }
+
+    int sumNumbers(TreeNode* root) {
+        int ans{};
+        int running{};
+        auto bt = [&](auto& self, TreeNode* node) -> void {
+            if (node == NULL) return;
+            running *= 10;
+            running += node->val;
+            if (node->left == NULL && node->right == NULL) {
+                ans += running;
+            }
+            self(self, node->left);
+            self(self, node->right);
+            running /= 10;
+            return;
+        };
+        bt(bt, root);
+        return ans;
+    }
+
+    Node* cloneGraph(Node* node) {
+        // CLONE A GRAPH USUALLY USE NODE-TO-NODE MAP, BUT I DIDN'T
+        if (node == NULL) return NULL;
+        int count{};
+        unordered_set<int> visited;
+        auto dfsCount = [&](auto& self, Node* root) -> void {
+            if (root == NULL) return;
+            if (visited.contains(root->val)) return;
+            visited.insert(root->val);
+            count = max(count, root->val);
+            for (Node* nd : root->neighbors) {
+                self(self, nd);
+            }
+            return;
+        };
+        dfsCount(dfsCount, node);
+        vector<Node*> pool(count);
+        for (int i = 0; i < count; ++i) {
+            pool[i] = new Node(i + 1);
+        }
+        visited.clear();
+        auto dfsConnect = [&](auto& self, Node* root) -> void {
+            if (root == NULL) return;
+            if (visited.contains(root->val)) return;
+            visited.insert(root->val);
+            for (Node* nd : root->neighbors) {
+                pool[root->val - 1]->neighbors.push_back(pool[nd->val - 1]);
+                self(self, nd);
+            }
+            return;
+        };
+        dfsConnect(dfsConnect, node);
+        return pool[node->val - 1];
+    }
+
+    int singleNumber(vector<int>& nums) {
+        int result = 0;
+        for (int i = 0; i < 32; ++i) {
+            int bitCount = 0;
+            for (int num : nums) {
+                if ((num >> i) & 1) {
+                    bitCount++;
+                }
+            }
+            if (bitCount % 3 != 0) {
+                result |= (1 << i);
+            }
+        }
+        return result;
+    }
+
+    void reorderList(ListNode* head) {
+        // REVERSE AND MERGE
+        if (head == NULL || head->next == NULL) return;
+        // find the middle
+        ListNode* slow = head;
+        ListNode* fast = head;
+        while (fast->next && fast->next->next) {
+            slow = slow->next;
+            fast = fast->next->next;
+        }
+        // now slow is at the last node of left part
+        // reverse the right half
+        ListNode* rightHead = slow->next;
+        slow->next = NULL;  // clean up tail
+        // auto reverseList = [](ListNode* node) -> ListNode* {
+        //     ListNode* prev = NULL;
+        //     ListNode* cur = node;
+        //     while (cur) {
+        //         ListNode* nextNode = cur->next;
+        //         cur->next = prev;
+        //         prev = cur;
+        //         cur = nextNode;
+        //     }
+        //     return prev;
+        //     // prev is the new head, while cur is at NULL
+        // };
+        // rightHead = reverseList(rightHead);
+        auto reverseList = [&](auto& self, ListNode* prev,
+                               ListNode* cur) -> void {
+            if (cur->next) self(self, cur, cur->next);
+            if (!cur->next) rightHead = cur;
+            cur->next = prev;
+            return;
+        };
+        reverseList(reverseList, NULL, rightHead);
+        // merger
+        auto combineList = [](ListNode* left, ListNode* right) {
+            while (right) {
+                ListNode* nextLeft = left->next;
+                ListNode* nextRight = right->next;
+                left->next = right;
+                right->next = nextLeft;
+                left = nextLeft;
+                right = nextRight;
+            }
+        };
+        combineList(head, rightHead);
+        return;
     }
 };
 
