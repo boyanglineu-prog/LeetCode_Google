@@ -46,6 +46,46 @@ class Node {
     }
 };
 
+class MinStack {
+   private:
+    list<int> lst;
+    list<int>::iterator minVal;
+
+    void updateMin() {
+        int tempMin = INT_MAX;
+        for (int val : lst) {
+            tempMin = min(tempMin, val);
+        }
+        minVal = find(lst.begin(), lst.end(), tempMin);
+    }
+
+   public:
+    MinStack() {}
+
+    void push(int val) {
+        if (lst.empty()) {
+            lst.push_back(val);
+            minVal = lst.begin();
+            return;
+        }
+        // if the list is not empty
+        lst.push_back(val);
+        if (val < *minVal) {
+            minVal = prev(lst.end());
+        }
+        return;
+    }
+
+    void pop() {
+        lst.erase(prev(lst.end()));
+        updateMin();
+    }
+
+    int top() { return *prev(lst.end()); }
+
+    int getMin() { return *minVal; }
+};
+
 class MyStack {
    private:
     queue<int> q;
@@ -1202,9 +1242,153 @@ class google {
         combineList(head, rightHead);
         return;
     }
+
+    ListNode* sortList(ListNode* head) {
+        if (head == NULL || head->next == NULL) return head;
+        vector<ListNode*> nodes;
+        ListNode* cur = head;
+        while (cur) {
+            nodes.push_back(cur);
+            cur = cur->next;
+        }
+        sort(nodes.begin(), nodes.end(),
+             [](ListNode* a, ListNode* b) { return a->val < b->val; });
+        int i = 0;
+        for (; i < nodes.size() - 1; ++i) {
+            nodes[i]->next = nodes[i + 1];
+        }
+        nodes[i]->next = NULL;
+        return nodes[0];
+    }
+
+    ListNode* sortList_merge_sort(ListNode* head) {
+        if (head == nullptr || head->next == nullptr) return head;
+        auto getMid = [](ListNode* node) -> ListNode* {
+            ListNode* slow = node;
+            ListNode* fast = node->next;
+            while (fast != nullptr && fast->next != nullptr) {
+                slow = slow->next;
+                fast = fast->next->next;
+            }
+            return slow;
+        };
+        ListNode* mid = getMid(head);
+        ListNode* right = mid->next;
+        ListNode* left = head;
+        mid->next = nullptr;  // clean up tail
+        left = sortList_merge_sort(left);
+        right = sortList_merge_sort(right);
+        auto merge = [](ListNode* l1, ListNode* l2) {
+            ListNode preHead(0);
+            ListNode* curr = &preHead;
+            while (l1 != nullptr && l2 != nullptr) {
+                if (l1->val <= l2->val) {
+                    curr->next = l1;
+                    l1 = l1->next;
+                } else {
+                    curr->next = l2;
+                    l2 = l2->next;
+                }
+                curr = curr->next;
+            }
+            curr->next = (l1 != nullptr) ? l1 : l2;
+            return preHead.next;
+        };
+        return merge(left, right);
+    }
+
+    int evalRPN(vector<string>& tokens) {
+        stack<int> stk;
+        int a{};
+        int b{};
+        for (string s : tokens) {
+            if (s == "+") {
+                b = stk.top();
+                stk.pop();
+                a = stk.top();
+                stk.pop();
+                stk.push(a + b);
+            } else if (s == "-") {
+                b = stk.top();
+                stk.pop();
+                a = stk.top();
+                stk.pop();
+                stk.push(a - b);
+            } else if (s == "*") {
+                b = stk.top();
+                stk.pop();
+                a = stk.top();
+                stk.pop();
+                stk.push(a * b);
+            } else if (s == "/") {
+                b = stk.top();
+                stk.pop();
+                a = stk.top();
+                stk.pop();
+                stk.push(a / b);
+            } else {
+                stk.push(stoi(s));
+            }
+        }
+        return stk.top();
+    }
+
+    int maxProduct(vector<int>& nums) {
+        // TWO PASS, SMART
+        int n = nums.size();
+        long long max_prod = nums[0];
+        long long left_prod = 0;
+        long long right_prod = 0;
+        for (int i = 0; i < n; ++i) {
+            left_prod = (left_prod == 0 ? 1 : left_prod) * nums[i];
+            right_prod = (right_prod == 0 ? 1 : right_prod) * nums[n - 1 - i];
+            max_prod = max({max_prod, left_prod, right_prod});
+        }
+        return (int)max_prod;
+    }
+
+    string fractionToDecimal(int numerator, int denominator) {
+        if (numerator == 0) return "0";
+        string ans = "";
+        long long n = (long long)numerator;
+        long long d = (long long)denominator;
+        if (n > 0 && d < 0 || n < 0 && d > 0) ans += '-';
+        n = abs(n);
+        d = abs(d);
+        long long quo = n / d;
+        ans += to_string(quo);
+        long long rem = n % d;
+        if (rem == 0) return ans;
+        ans += ".";
+        vector<int> digits;
+        unordered_map<long long, long long> mp;  // {rem: index};
+        long long ix{};
+        while (true) {
+            if (rem == 0) break;
+            if (mp.find(rem) != mp.end()) break;
+            // if this rem no happend yet
+            mp[rem] = ix++;
+            rem *= 10;
+            quo = rem / d;
+            rem = rem % d;
+            digits.push_back(quo);
+        }
+        if (rem == 0) {
+            for (long long i = 0; i < ix; ++i) ans += digits[i] + '0';
+            return ans;
+        }
+        for (long long i = 0; i < mp[rem]; ++i) ans += digits[i] + '0';
+        ans += '(';
+        for (long long i = mp[rem]; i < ix; ++i) ans += digits[i] + '0';
+        ans += ')';
+        return ans;
+    }
 };
 
 int main() {
     cout << "Hello, world." << endl;
+    vector<int> nums = {2, 3, -2, 4};
+    google obj;
+    int k = obj.maxProduct(nums);
     return 0;
 }
