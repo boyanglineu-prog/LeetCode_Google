@@ -1383,6 +1383,137 @@ class google {
         ans += ')';
         return ans;
     }
+
+    int trailingZeroes(int n) {
+        // FIND OUT HOW MANY 5s
+        if (n < 5) return 0;
+        int ans{};
+        auto fives = [](int num) -> int {
+            int count{};
+            while (num % 5 == 0) {
+                ++count;
+                num /= 5;
+            }
+            return count;
+        };
+        for (int num = 5; num <= n; ++num) {
+            ans += fives(num);
+        }
+        return ans;
+    }
+
+    int rob(vector<int>& nums) {
+        // BT IS ALWAYS SLOW
+        // int n = nums.size();
+        // int ans{};
+        // int sum{};
+        // auto bt = [&](auto& self, int pos) -> void {
+        //     if (pos >= n) {
+        //         ans = max(ans, sum);
+        //         return;
+        //     }
+        //     sum += nums[pos];
+        //     self(self, pos + 2);
+        //     sum -= nums[pos];
+        //     self(self, pos + 1);
+        //     return;
+        // };
+        // bt(bt, 0);
+        // return ans;
+        int n = nums.size();
+        if (n == 0) return 0;
+        if (n == 1) return nums[0];
+        if (n == 2) return max(nums[0], nums[1]);
+        vector<int> memoWith(n, -1);
+        vector<int> memoWithout(n, -1);
+        memoWith[0] = nums[0];
+        memoWithout[0] = 0;
+        memoWith[1] = nums[1];
+        memoWithout[1] = nums[0];
+        for (int i = 2; i < n; ++i) {
+            memoWith[i] = memoWithout[i - 1] + nums[i];
+            memoWithout[i] = max(memoWithout[i - 1], memoWith[i - 1]);
+        }
+        return max(memoWith[n - 1], memoWithout[n - 1]);
+        // take away:
+        // can be more elegant
+        // int prev1 = 0; // dp[i-1]
+        // int prev2 = 0; // dp[i-2]
+        // for(int num : nums) {
+        //     int curr = max(prev1, prev2 + num);
+        //     prev2 = prev1;
+        //     prev1 = curr;
+        // }
+        // return prev1;
+    }
+
+    vector<int> rightSideView(TreeNode* root) {
+        if (root == NULL) return {};
+        vector<vector<TreeNode*>> layers;
+        layers.push_back({root});
+        int level = 0;
+        while (level < layers.size()) {
+            vector<TreeNode*> nextLayer;
+            for (TreeNode* node : layers[level]) {
+                if (node->left) nextLayer.push_back(node->left);
+                if (node->right) nextLayer.push_back(node->right);
+            }
+            if (nextLayer.empty()) break;
+            layers.push_back(nextLayer);
+            ++level;
+        }
+        vector<int> ans(layers.size());
+        for (int i = 0; i < layers.size(); ++i) {
+            ans[i] = layers[i].back()->val;
+        }
+        return ans;
+    }
+
+    int countPrimes(int n) {
+        if (n == 0) return 0;
+        if (n == 1) return 0;
+        if (n == 2) return 0;
+        vector<bool> isPrime(n, true);
+        isPrime[0] = false;
+        isPrime[1] = false;
+        for (int num = 2; num < n; ++num) {
+            if (!isPrime[num]) continue;
+            for (long mul = num * num; mul < n; mul += num) {
+                isPrime[mul] = false;
+            }
+        }
+        int count{};
+        for (bool b : isPrime) count += b ? 1 : 0;
+        return count;
+    }
+
+    bool canFinish(int numCourses, vector<vector<int>>& prerequisites) {
+        // AS LONG AS THERE IS NO CYCLE
+        int n = numCourses;
+        vector<vector<int>> adj(n, vector<int>());
+        for (const vector<int>& v : prerequisites) adj[v[0]].push_back(v[1]);
+        vector<int> status(n, 0);
+        // 0 = unvisited, 1 = visiting, 2 = finihsed safe
+        auto hasCycle = [&](auto& self, int node) -> bool {
+            status[node] = 1;  // mark as visiting;
+            for (int next : adj[node]) {
+                //  if next is visited and safe
+                if (status[next] == 2) continue;
+                // if next is right now being visited
+                if (status[next] == 1) return true;
+                // if new node and has a cycle
+                if (status[next] == 0 && self(self, next)) return true;
+                // if new node but no cycle, just continnue;
+            }
+            // all connections visited, no cycle
+            status[node] = 2;
+            return false;
+        };
+        for (int i = 0; i < n; ++i) {
+            if (hasCycle(hasCycle, i)) return false;
+        }
+        return true;
+    }
 };
 
 int main() {
