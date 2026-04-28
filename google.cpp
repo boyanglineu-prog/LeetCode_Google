@@ -249,6 +249,78 @@ class LRUCache {
     }
 };
 
+class BSTIterator {
+   private:
+    vector<int> toList;
+
+    int pos{};
+
+    void dfs(TreeNode* node) {
+        if (node == NULL) return;
+        dfs(node->left);
+        this->toList.push_back(node->val);
+        dfs(node->right);
+        return;
+    }
+
+   public:
+    BSTIterator(TreeNode* root) { dfs(root); }
+
+    int next() { return toList[pos++]; }
+
+    bool hasNext() { return pos < toList.size(); }
+};
+
+class Trie {
+   private:
+    struct TrieNode {
+        char val;
+        bool end;
+        TrieNode* next[26];
+        TrieNode() {
+            this->val = 0;
+            this->end = false;
+            for (int i = 0; i < 26; ++i) this->next[i] = nullptr;
+        }
+    };
+    TrieNode* root;
+
+   public:
+    Trie() { root = new TrieNode(); }
+
+    void insert(string word) {
+        TrieNode* node = root;
+        for (char c : word) {
+            if (node->next[c - 'a'] == nullptr) {
+                TrieNode* new_node = new TrieNode();
+                new_node->val = c;
+                node->next[c - 'a'] = new_node;
+            }
+            node = node->next[c - 'a'];
+        }
+        // every letter is there, then set the end as true;
+        node->end = true;
+    }
+
+    bool search(string word) {
+        TrieNode* node = root;
+        for (char c : word) {
+            if (node->next[c - 'a'] == nullptr) return false;
+            node = node->next[c - 'a'];
+        }
+        return node->end;
+    }
+
+    bool startsWith(string prefix) {
+        TrieNode* node = root;
+        for (char c : prefix) {
+            if (node->next[c - 'a'] == nullptr) return false;
+            node = node->next[c - 'a'];
+        }
+        return node != nullptr;
+    }
+};
+
 class google {
    public:
     ListNode* deleteDuplicates_(ListNode* head) {
@@ -1513,6 +1585,43 @@ class google {
             if (hasCycle(hasCycle, i)) return false;
         }
         return true;
+    }
+
+    vector<int> findOrder(int numCourses, vector<vector<int>>& prerequisites) {
+        // PUT ALL THE PARENTS TOGETHER AS A LIST, NOT THE CHILDREN
+        int n = numCourses;
+        vector<vector<int>> dep(n);
+        vector<int> in(n, 0);
+        for (auto v : prerequisites) {
+            dep[v[1]].push_back(v[0]);
+            // this is the KEY
+            // pre -> all courses that depend on this pre
+            in[v[0]]++;
+        }
+        queue<int> q;
+        for (int i = 0; i < n; ++i) {
+            if (in[i] == 0) q.push(i);
+        }
+        vector<int> ans;
+        while (!q.empty()) {
+            int cur = q.front();
+            q.pop();
+            ans.push_back(cur);
+            for (int next : dep[cur]) {
+                if (--in[next] == 0) q.push(next);
+                // next is zero in now
+            }
+        }
+        if (ans.size() == n) return ans;
+        return {};
+        // take away:
+        // 1. put all the parents together as a list, not the children
+        // because I want to know, for each new zero, who will be next zeros
+        // aka, if a course is found zero, then its parents are unlocked by one
+        // degree
+        // otherwise if let the parent be head and followed by a list of
+        // children if a children is freed, I have to scan all the parents to
+        // see who has this children
     }
 };
 
