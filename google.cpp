@@ -1474,7 +1474,7 @@ class google {
         return ans;
     }
 
-    int rob(vector<int>& nums) {
+    int rob0(vector<int>& nums) {
         // BT IS ALWAYS SLOW
         // int n = nums.size();
         // int ans{};
@@ -1622,6 +1622,112 @@ class google {
         // otherwise if let the parent be head and followed by a list of
         // children if a children is freed, I have to scan all the parents to
         // see who has this children
+    }
+
+    int rob(vector<int>& nums) {
+        int n = nums.size();
+        if (n == 0) return 0;
+        if (n == 1) return nums[0];
+        if (n == 2) return max(nums[0], nums[1]);
+        vector<int> memo1(n);  // rob first
+        vector<int> memo2(n);  // not rob first
+        memo1[0] = nums[0];
+        memo1[1] = nums[0];
+        memo2[0] = 0;
+        memo2[1] = nums[1];
+        for (int i = 2; i < n - 1; ++i) {
+            memo1[i] = max(memo1[i - 2] + nums[i], memo1[i - 1]);
+            memo2[i] = max(memo2[i - 2] + nums[i], memo2[i - 1]);
+        }
+        // for memo1, the last elem don't need to consider
+        memo1[n - 1] = memo1[n - 2];
+        memo2[n - 1] = max(memo2[n - 3] + nums[n - 1], memo2[n - 2]);
+        return max(memo1[n - 1], memo2[n - 1]);
+    }
+
+    int findKthLargest(vector<int>& nums, int k) {
+        int maxNum = INT_MIN;
+        int minNum = INT_MAX;
+        for (int num : nums) {
+            maxNum = max(maxNum, num);
+            minNum = min(minNum, num);
+        }
+        // for the Kth largest, at most (k-1) numbers greater
+        // so iterate the numbers, count the greaters
+        // once I pass a number that the strick greater just jump above k-1
+        // that very number is what I am looking for
+        int l = minNum;
+        int r = maxNum;
+        while (l <= r) {
+            int mid = l + (r - l) / 2;
+            int count{};
+            for (int num : nums)
+                if (num > mid) ++count;
+            if (count <= k - 1) {
+                // this mid is big but not at the very edge yet.
+                // so it can be smaller, until we try out a "error", so that we
+                // know we just passed the right answer
+                r = mid - 1;
+            } else {
+                l = mid + 1;
+            }
+        }
+        // after this binary search, l is at the insert point
+        // which is the first place that used to belongs to r
+        // in this case, count <= k -1
+        // which also means, this number is part of the original list,
+        // because smaller than this number, there will be more greater numbers
+        // it is right because this number becomes a greater for that
+        // "one-smaller" number
+        return l;
+    }
+
+    int computeArea(int ax1, int ay1, int ax2, int ay2, int bx1, int by1,
+                    int bx2, int by2) {
+        vector<int> ax = {min(ax1, ax2), max(ax1, ax2)};
+        vector<int> ay = {min(ay1, ay2), max(ay1, ay2)};
+        vector<int> bx = {min(bx1, bx2), max(bx1, bx2)};
+        vector<int> by = {min(by1, by2), max(by1, by2)};
+        int areaA = (ax[1] - ax[0]) * (ay[1] - ay[0]);
+        int areaB = (bx[1] - bx[0]) * (by[1] - by[0]);
+        if (ax[1] <= bx[0] || ax[0] >= bx[1] || ay[1] <= by[0] ||
+            ay[0] >= by[1])
+            // means no overlap
+            return areaA + areaB;
+        // otherwise, there is overlap
+        // both x and y must both have overlap
+        // so among the four x-coordinates, pick the inner two
+        vector<int> x = {ax1, ax2, bx1, bx2};
+        vector<int> y = {ay1, ay2, by1, by2};
+        sort(x.begin(), x.end());
+        sort(y.begin(), y.end());
+        return areaA + areaB - (x[2] - x[1]) * (y[2] - y[1]);
+    }
+
+    int kthSmallest(TreeNode* root, int k) {
+        // BST, LET'S FLATTEN IT
+        vector<int> nums;
+        auto dfs = [&](auto& self, TreeNode* node) -> void {
+            if (node == NULL) return;
+            self(self, node->left);
+            nums.push_back(node->val);
+            self(self, node->right);
+            return;
+        };
+        dfs(dfs, root);
+        return nums[k - 1];
+    }
+
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        int a = min(p->val, q->val);
+        int b = max(p->val, q->val);
+        auto dfs = [&](auto& self, TreeNode* node) -> TreeNode* {
+            if (node->val >= a && node->val <= b) return node;
+            if (node->val > b) return self(self, node->left);
+            if (node->val < a) return self(self, node->right);
+            return NULL;
+        };
+        return dfs(dfs, root);
     }
 };
 
