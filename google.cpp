@@ -1719,15 +1719,75 @@ class google {
     }
 
     TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
-        int a = min(p->val, q->val);
-        int b = max(p->val, q->val);
-        auto dfs = [&](auto& self, TreeNode* node) -> TreeNode* {
-            if (node->val >= a && node->val <= b) return node;
-            if (node->val > b) return self(self, node->left);
-            if (node->val < a) return self(self, node->right);
-            return NULL;
+        // THE KEY IS "EITHER"
+        if (root == NULL || root == p || root == q) return root;
+        // as long as seen some one, return
+        // it is kind of early return, no need to check the other node
+        TreeNode* left = lowestCommonAncestor(root->left, p, q);
+        TreeNode* right = lowestCommonAncestor(root->right, p, q);
+        // because this is early return, we are not sure if left or right has
+        // met one or both but we can leverage condition to make decision if
+        // both met some one, then current root must be the ancestor
+        if (left != NULL && right != NULL) return root;
+        // if not, means only one met both, than the other node must return
+        // NULL, even though we are not explicitly told that the node met two
+        // rather then one
+        return (left != NULL) ? left : right;
+        // take away:
+        // 1. if root is NULL, return NULL, that is obvious, but why p || q not
+        // p && q ? It is smart, it's a early return strategy, which leverage
+        // the "vague" return
+    }
+
+    void deleteNode(ListNode* node) {
+        ListNode* cur = node;
+        while (cur->next->next) {
+            cur->val = cur->next->val;
+            cur = cur->next;
+        }
+        cur->val = cur->next->val;
+        cur->next = NULL;
+        return;
+    }
+
+    vector<vector<string>> groupStrings(vector<string>& strings) {
+        int n = strings.size();
+        vector<int> root(n);
+        for (int i = 0; i < n; ++i) root[i] = i;
+        auto find = [&](auto& self, int i) -> int {
+            if (i == root[i]) return i;
+            return root[i] = self(self, root[i]);
         };
-        return dfs(dfs, root);
+        auto unite = [&](int a, int b) -> void {
+            int rootA = find(find, a);
+            int rootB = find(find, b);
+            if (rootA != rootB) root[rootA] = rootB;
+        };
+        auto match = [&](int a, int b) -> bool {
+            int len = strings[a].size();
+            if (len != strings[b].size()) return false;
+            int offset = (strings[a][0] - strings[b][0] + 26) % 26;
+            for (int i = 1; i < len; ++i) {
+                if ((strings[a][i] - strings[b][i] + 26) % 26 != offset)
+                    return false;
+            }
+            return true;
+        };
+        for (int i = 0; i < n; ++i) {
+            for (int j = i + 1; j < n; ++j) {
+                if (match(i, j)) unite(i, j);
+            }
+        }
+        unordered_map<int, vector<string>> mp;
+        for (int i = 0; i < n; ++i) {
+            mp[find(find, i)].push_back(std::move(strings[i]));
+        }
+        vector<vector<string>> ans;
+        ans.reserve(mp.size());
+        for (const auto& [key, val] : mp) {
+            ans.push_back(std::move(val));
+        }
+        return ans;
     }
 };
 
