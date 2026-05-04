@@ -1249,7 +1249,7 @@ class google {
         return pool[node->val - 1];
     }
 
-    int singleNumber(vector<int>& nums) {
+    int singleNumber_0(vector<int>& nums) {
         int result = 0;
         for (int i = 0; i < 32; ++i) {
             int bitCount = 0;
@@ -1788,6 +1788,67 @@ class google {
             ans.push_back(std::move(val));
         }
         return ans;
+    }
+
+    int minMeetingRooms(vector<vector<int>>& intervals) {
+        sort(intervals.begin(), intervals.end(),
+             [](const auto& o1, const auto& o2) -> bool {
+                 return o1[0] < o2[0];
+             });
+        vector<int> ends;
+        for (auto& v : intervals) {
+            int i = 0;
+            for (; i < ends.size(); ++i) {
+                if (ends[i] > v[0]) continue;
+                ends[i] = v[1];  // update the end time
+                break;
+            }
+            if (i == ends.size()) {
+                // means vavant room not found
+                // open a new room
+                ends.push_back(v[1]);
+            }
+            sort(ends.begin(), ends.end());
+        }
+        return ends.size();
+    }
+
+    vector<int> singleNumber(vector<int>& nums) {
+        // DIFF BIT IS KEY
+        long long totalXOR{};
+        for (int num : nums) totalXOR ^= num;
+        int diffBit = (int)(totalXOR & -totalXOR);
+        int a{};
+        int b{};
+        for (int num : nums) {
+            if (num & diffBit)
+                a ^= num;
+            else
+                b ^= num;
+        }
+        return {a, b};
+        // take away:
+        // 1. -totalXOR is "reverse then plus one"
+        // after reverse, xor ^ reversed xor = 0
+        // then plus one...
+        // it is hard to describe but easy to just try it
+        // if I don't know the & - trick, I can just ues /= 2 to find which
+        // digit is different, then use that digit to generate a diffNumber
+    }
+
+    int numSquares(int n) {
+        // DP + MIN
+        vector<int> dp(n + 1, n);
+        dp[0] = 0;  // number 0 needs 0 perfect squares
+        for (int i = 0; i <= n; ++i) {
+            // by default any number is composed of n ones but it can also be
+            // added by a perfect square from another number so we try all the
+            // possible "another numbers",and min it
+            for (int j = 0; j * j <= i; ++j) {
+                dp[i] = min(dp[i], dp[i - j * j] + 1);
+            }
+        }
+        return dp[n];
     }
 };
 
