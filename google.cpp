@@ -321,6 +321,63 @@ class Trie {
     }
 };
 
+class Codec {
+   private:
+    char delimiter;
+
+   public:
+    Codec() { this->delimiter = 2; }
+
+    string encode(vector<string>& strs) {
+        string ans = "";
+        for (const auto& s : strs) {
+            ans += s;
+            ans += this->delimiter;
+        }
+        ans.back() = '\0';
+        return ans;
+    }
+
+    vector<string> decode(string s) {
+        vector<string> ans;
+        int l{};
+        int r{};
+        for (; r < s.size(); ++r) {
+            if (s[r] != this->delimiter) continue;
+            ans.push_back(s.substr(l, r - l));
+            l = r + 1;
+        }
+        ans.push_back(s.substr(l, r - l));
+        return ans;
+    }
+};
+
+class NumMatrix {
+   private:
+    vector<vector<int>> prefixSum;
+
+   public:
+    NumMatrix(vector<vector<int>>& matrix) {
+        int m = matrix.size();
+        int n = matrix[0].size();
+        this->prefixSum.assign(m + 1, vector<int>(n + 1, 0));
+        for (int i = 0; i <= m; ++i) prefixSum[i][0] = 0;
+        for (int j = 0; j <= n; ++j) prefixSum[0][j] = 0;
+        for (int i = 1; i <= m; ++i) {
+            for (int j = 1; j <= n; ++j) {
+                prefixSum[i][j] = prefixSum[i - 1][j] + prefixSum[i][j - 1] -
+                                  prefixSum[i - 1][j - 1] +
+                                  matrix[i - 1][j - 1];
+            }
+        }
+    }
+
+    int sumRegion(int row1, int col1, int row2, int col2) {
+        return prefixSum[row2 + 1][col2 + 1] - prefixSum[row2 + 1][col1] -
+               prefixSum[row1][col2 + 1] + prefixSum[row1][col1];
+    }
+};
+
 class google {
    public:
     ListNode* deleteDuplicates_(ListNode* head) {
@@ -1849,6 +1906,40 @@ class google {
             }
         }
         return dp[n];
+    }
+
+    void wallsAndGates(vector<vector<int>>& rooms) {
+        // MULTI SOURCE BFS. PROCESS ON PUSH? PROCESS ON POP?
+        int INF = 2147483647;
+        int m = rooms.size();
+        if (m == 0) return;
+        int n = rooms[0].size();
+        queue<pair<int, int>> q;
+        for (int i = 0; i < m; ++i) {
+            for (int j = 0; j < n; ++j) {
+                if (rooms[i][j] == 0) q.push({i, j});
+            }
+        }
+        vector<pair<int, int>> dirs = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+        while (!q.empty()) {
+            auto [r, c] = q.front();
+            q.pop();
+            for (auto d : dirs) {
+                int nr = r + d.first;
+                int nc = c + d.second;
+                if (nr >= 0 && nr < m && nc >= 0 && nc < n &&
+                    rooms[nr][nc] == INF) {
+                    rooms[nr][nc] = rooms[r][c] + 1;
+                    q.push({nr, nc});
+                }
+            }
+        }
+        return;
+        // take away:
+        // 1. what are we queuing? pos processed? or pos not yet?
+        // if we queue new pos, one we pop the pos, we have no idea what the
+        // current or previous dist is. because we lose the link to its
+        // prescendent. So, we must process before we queue the pos.
     }
 };
 
