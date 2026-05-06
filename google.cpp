@@ -1941,12 +1941,104 @@ class google {
         // current or previous dist is. because we lose the link to its
         // prescendent. So, we must process before we queue the pos.
     }
+
+    int maxProfit(vector<int>& prices) {
+        // FSM +  DP = PARALLEL UNIVERSE
+        // int n = prices.size();
+        // if (n == 0) return 0;
+        // // four memos, but no need the entire memo, we only need yesterday,
+        // // so we just keep the fringe
+        // // the names suggests the action of today, the value is the profit
+        // right
+        // // after today's operation
+        // int hold = -prices[0];  // have a stock at hand
+        // int sold = 0;           // sold
+        // int empty = 0;          // protfolio is empty
+        // for (int i = 1; i < n; ++i) {
+        //     int prevHold = hold;
+        //     int prevSold = sold;
+        //     int prevEmpty = empty;
+        //     // If I want to become/keep "hold" today, yesterday I must be
+        //     hold
+        //     // or empty. Yesterday I cannot be sold, because of cool down
+        //     hold = max(prevHold, prevEmpty - prices[i]);
+        //     // If I want to become "sold" today, I must came from "hold"
+        //     // yesterday
+        //     sold = prevHold + prices[i];
+        //     // If I want to become/keep "empty" today, I must came from
+        //     "empty"
+        //     // or "sold" yesterday
+        //     empty = max(prevEmpty, prevSold);
+        // }
+        // return max(sold, empty);
+        int n = prices.size();
+        if (n <= 1) return 0;
+        int buy = -prices[0];
+        int sell = 0;
+        int hold = -prices[0];
+        int empty = 0;
+        for (int i = 1; i < n; ++i) {
+            int prevBuy = buy;
+            int prevSell = sell;
+            int prevHold = hold;
+            int prevEmpty = empty;
+            // prevEmpty -> buy
+            buy = prevEmpty - prices[i];
+            // prevBuy -> sell, prevHold -> sell
+            sell = max(prevBuy, prevHold) + prices[i];
+            // prevBuy -> hold, prevHold -> hold
+            hold = max(prevBuy, prevHold);
+            // prevEmpth -> empty, prevSell -> empty
+            empty = max(prevEmpty, prevSell);
+        }
+        return max(sell, empty);
+        // take away:
+        // 1. FSM + DP
+        // buy, sell, hold, empty
+        // prevBuy, prevSell, prevHold, prevEmpty
+        // prevEmpty -> buy
+        // prevBuy -> sell, prevHold -> sell
+        // prevBuy -> hold, prevHold -> hold
+        // prevEmpth -> empty, prevSell -> empty
+    }
+
+    int bulbSwitch(int n) {
+        // AHA!!!!!!!
+        if (n == 0) return 0;
+        if (n == 1) return 1;
+        // In which rounds will be the buld toggled?
+        // #1, 1
+        // #2, 1, 2
+        // #3, 1, 3
+        // #4, 1, 2, 4
+        // #5, 1, 5
+        // #12, 1, 2, 3, 4, 6, 12
+        // so the pattern is about number of factors,including 1 and self
+        // if num is odd, the bulb is on, else the buld is off
+        // now the question becomes, from 1 through n, how many factors do they
+        // each have?
+        auto numOfFactors = [](int i) -> int {
+            int count{};
+            for (int j = 1; j <= i / 2; ++j) {
+                count += i % j == 0 ? 1 : 0;
+            }
+            // though we set the limit as i/2, but don't forget i itself
+            // so offset the count by one
+            return count + 1;
+        };
+        int ans{};
+        for (int i = 1; i <= n; ++i) {
+            ans += numOfFactors(i) % 2 == 0 ? 0 : 1;
+        }
+        return ans;
+    }
 };
 
 int main() {
     cout << "Hello, world." << endl;
     vector<int> nums = {2, 3, -2, 4};
     google obj;
-    int k = obj.maxProduct(nums);
+    int k = obj.bulbSwitch(3);
+    cout << k << endl;
     return 0;
 }
