@@ -2004,33 +2004,73 @@ class google {
 
     int bulbSwitch(int n) {
         // AHA!!!!!!!
-        if (n == 0) return 0;
-        if (n == 1) return 1;
-        // In which rounds will be the buld toggled?
-        // #1, 1
-        // #2, 1, 2
-        // #3, 1, 3
-        // #4, 1, 2, 4
-        // #5, 1, 5
-        // #12, 1, 2, 3, 4, 6, 12
-        // so the pattern is about number of factors,including 1 and self
-        // if num is odd, the bulb is on, else the buld is off
-        // now the question becomes, from 1 through n, how many factors do they
-        // each have?
-        auto numOfFactors = [](int i) -> int {
-            int count{};
-            for (int j = 1; j <= i / 2; ++j) {
-                count += i % j == 0 ? 1 : 0;
+        return (int)sqrt(n);
+    }
+
+    int coinChange(vector<int>& coins, int amount) {
+        if (amount == 0) return 0;
+        sort(coins.begin(), coins.end());
+        vector<int> dp(amount + 1, -1);
+        dp[0] = 0;
+        for (int i = 1; i <= amount; ++i) {
+            // current number must be from some old number plus a coin
+            // so try every coin
+            int minNumCoins = INT_MAX;
+            for (int coin : coins) {
+                if (i - coin < 0) {
+                    // if this coin is already too big, no need to continue
+                    break;
+                }
+                if (dp[i - coin] == -1) {
+                    // means that number cann'e be reached
+                    continue;
+                }
+                minNumCoins = min(minNumCoins, dp[i - coin]);
             }
-            // though we set the limit as i/2, but don't forget i itself
-            // so offset the count by one
-            return count + 1;
-        };
-        int ans{};
-        for (int i = 1; i <= n; ++i) {
-            ans += numOfFactors(i) % 2 == 0 ? 0 : 1;
+            if (minNumCoins != INT_MAX) dp[i] = minNumCoins + 1;
         }
-        return ans;
+        return dp[amount];
+    }
+
+    int integerBreak(int n) {
+        vector<int> dp(n + 1, 0);
+        dp[0] = -1;  // unused
+        dp[1] = 1;
+        for (int i = 2; i <= n; ++i) {
+            // i = a + b
+            for (int a = 1; a <= i / 2; ++a) {
+                int b = i - a;
+                dp[i] = max(dp[i], max(a, dp[a]) * max(b, dp[b]));
+            }
+        }
+        return dp[n];
+    }
+
+    int rob(TreeNode* root) {
+        // POST ORDER DFS + PARALLEL DP
+        auto postOrderDFS = [](auto& self, TreeNode* node) -> pair<int, int> {
+            // first is rob this node
+            // second is not rob this node
+            if (!node) return {0, 0};
+            auto [leftRob, leftNotRob] = self(self, node->left);
+            auto [rightRob, rightNotRob] = self(self, node->right);
+            int robThis = node->val + leftNotRob + rightNotRob;
+            int notRobThis =
+                max(leftRob, leftNotRob) + max(rightRob, rightNotRob);
+            return {robThis, notRobThis};
+        };
+        pair<int, int> ans = postOrderDFS(postOrderDFS, root);
+        return max(ans.first, ans.second);
+        // take away:
+        // 1. DP is intuitive, in this case we only track the end result of each
+        // step, it is Greedy at the same time.
+        // 2. But why POST ORDER DFS?
+        // It is tempting to pre order dfs, but we must keep track of pre, cur,
+        // and left/right, three levels in total, which is complicated.
+        // Additionaly, when traversal ends, there is a big number(partial
+        // result) at the end of EACH LEAF NODE, which introduces another
+        // complecity to calc the global result. Post order has a very natual
+        // "sum-up" property, which reslve all the concerns above.
     }
 };
 
@@ -2038,7 +2078,7 @@ int main() {
     cout << "Hello, world." << endl;
     vector<int> nums = {2, 3, -2, 4};
     google obj;
-    int k = obj.bulbSwitch(3);
+    int k = obj.integerBreak(8);
     cout << k << endl;
     return 0;
 }
