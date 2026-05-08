@@ -378,6 +378,32 @@ class NumMatrix {
     }
 };
 
+class HitCounter {
+   private:
+    vector<int> stamps;
+    int curLeft;
+    int curRight;
+
+   public:
+    HitCounter() {
+        this->curLeft = 0;
+        this->curRight = -1;
+    }
+
+    void hit(int timestamp) {
+        this->stamps.push_back(timestamp);
+        ++this->curRight;
+    }
+
+    int getHits(int timestamp) {
+        while (this->curLeft <= this->curRight &&
+               this->stamps[this->curLeft] <= timestamp - 300) {
+            ++this->curLeft;
+        }
+        return this->curRight - this->curLeft + 1;
+    }
+};
+
 class google {
    public:
     ListNode* deleteDuplicates_(ListNode* head) {
@@ -2071,6 +2097,87 @@ class google {
         // result) at the end of EACH LEAF NODE, which introduces another
         // complecity to calc the global result. Post order has a very natual
         // "sum-up" property, which reslve all the concerns above.
+    }
+
+    int numberOfPatterns(int m, int n) {
+        // BT + SKIP MATRIX
+        // {1,3,7,9}, {2,4,6,8}, {5}, by symmetricity, 3 distinct case in total
+        int total{};
+        int len = 0;
+        int skip[10][10] = {0};
+        skip[1][3] = skip[3][1] = 2;
+        skip[3][9] = skip[9][3] = 6;
+        skip[9][7] = skip[7][9] = 8;
+        skip[7][1] = skip[1][7] = 4;
+        skip[1][9] = skip[9][1] = 5;
+        skip[2][8] = skip[8][2] = 5;
+        skip[3][7] = skip[7][3] = 5;
+        skip[4][6] = skip[6][4] = 5;
+        vector<bool> used(10, false);
+        used[0] = true;
+        auto bt = [&](auto& self, int prev, int cur) -> void {
+            // too long, no good
+            if (len >= n) return;
+            // repeat, no good
+            if (used[cur]) return;
+            // invalid middle, no good
+            if (!used[skip[prev][cur]]) return;
+            // else, good current number, accept
+            // start bt
+            used[cur] = true;
+            ++len;
+            if (len >= m && len <= n) total++;
+            for (int next = 1; next <= 9; ++next) {
+                self(self, cur, next);
+            }
+            --len;
+            used[cur] = false;
+            // end bt
+            return;
+        };
+        bt(bt, 0, 1);
+        bt(bt, 0, 2);
+        total *= 4;
+        bt(bt, 0, 5);
+        return total;
+    }
+
+    vector<int> sortTransformedArray(vector<int>& nums, int a, int b, int c) {
+        // ZIPPER
+        int n = nums.size();
+        vector<int> ans;
+        ans.reserve(n);
+        if (a == 0) {
+            for (int num : nums) ans.push_back(b * num + c);
+            if (b < 0) std::reverse(ans.begin(), ans.end());
+            return ans;
+        }
+        double axis = (double)-b / (2 * a);
+        int l{};
+        int r = n - 1;
+        while (l <= r) {
+            int mid = l + (r - l) / 2;
+            if (nums[mid] >= axis)
+                r = mid - 1;
+            else
+                l = mid + 1;
+        }  // l is at first r zone
+        int left = l - 1;
+        int right = l;
+        while (left >= 0 || right < n) {
+            double distL = left >= 0 ? axis - nums[left] : INT_MAX;
+            double distR = right < n ? nums[right] - axis : INT_MAX;
+            if (distL <= distR) {
+                ans.push_back(a * nums[left] * nums[left] + b * nums[left] + c);
+                --left;
+            } else {
+                ans.push_back(a * nums[right] * nums[right] + b * nums[right] +
+                              c);
+                ++right;
+            }
+        }
+        if (a < 0) std::reverse(ans.begin(), ans.end());
+        return ans;
     }
 };
 
