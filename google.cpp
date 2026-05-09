@@ -2179,6 +2179,122 @@ class google {
         if (a < 0) std::reverse(ans.begin(), ans.end());
         return ans;
     }
+
+    vector<int> largestDivisibleSubset(vector<int>& nums) {
+        // UPDATE DP, AND TRACK PARENT
+        int n = nums.size();
+        if (n == 0) return {};
+        // sort makes things easier
+        sort(nums.begin(), nums.end());
+        int maxIndex{};  // the biggest value is not necessarily the last value
+        vector<int> dp(n, 1);  // length of largest subset TILL nums[i] and
+                               // INCLUDES the nums[i]
+        vector<int> parent(n, -1);
+        for (int i = 1; i < n; ++i) {
+            // scan every previous number
+            for (int j = 0; j < i; ++j) {
+                // if divisible, it is possible that group[i] is just gourp[j]
+                // plus nums[i] as long as group[j] is big enough
+                // if that is the case, new largest group found!
+                // update dp[i] ofcourse, and more importantly, track which
+                // parent group does this new largest group come from
+                if (nums[i] % nums[j] == 0 && dp[i] < dp[j] + 1) {
+                    dp[i] = dp[j] + 1;
+                    parent[i] = j;
+                }
+            }
+            // dp[i] done
+            // the biggest value is not necessarily the last value
+            if (dp[i] > dp[maxIndex]) maxIndex = i;
+        }
+        // now find the maxIndex
+        vector<int> ans;
+        int cur = maxIndex;
+        while (cur >= 0) {
+            ans.push_back(nums[cur]);
+            cur = parent[cur];
+        }
+        return ans;
+        // take away:
+        // 1. As we move along the nums, we use dp to track and update "what is
+        // the biggest length till now AND INCLUDE this number?" Note that the
+        // biggest value is not necessarily the last element. The easy part is,
+        // go back to check: which gourp can I join? The tricker part is
+        // remember which group I joined. If not, even though I have the largest
+        // length, I can't reconstruct the exact group. That is where parent[]
+        // come into place.
+    }
+
+    int getSum(int a, int b) {
+        // SUM_WITHOUT_CARYY + CARRY
+        while (b != 0) {
+            int sumWithoutCarry = a ^ b;
+            int carry = (unsigned int)(a & b) << 1;
+            // only 1 and 1 generates carry, and carry belongs to left digit,
+            // that's why << 1
+            a = sumWithoutCarry;
+            b = carry;
+            // if there is still carry, need to repeat, until there is no carry
+        }
+        return a;
+    }
+
+    vector<vector<int>> kSmallestPairs(vector<int>& nums1, vector<int>& nums2,
+                                       int k) {  // 2D MONOTONIC
+        // int m = nums1.size();
+        // int n = nums2.size();
+        // vector<vector<int>> ans;
+        // // for each number in nums1, we track "which number in nums2 has
+        // being
+        // // paired? What is the fringe?"
+        // vector<int> surfaceM_N(m, 0);
+        // // iniitally, all numbers in nums1 is ready to pair with the first
+        // elem
+        // // in nums2.
+        // // Scan all fringes, see which one is the samllest
+        // for (int _ = 0; _ < k; ++_) {
+        //     int minSum = INT_MAX;
+        //     int ix1{};
+        //     int ix2{};
+        //     for (int i = 0; i < m; ++i) {
+        //         // scan all m lines
+        //         // if this line is fully paired, continue;
+        //         if (surfaceM_N[i] == n) continue;
+        //         // if not, there will be a valid fringe
+        //         int tempSum = nums1[i] + nums2[surfaceM_N[i]];
+        //         if (tempSum < minSum) {
+        //             // update
+        //             minSum = tempSum;
+        //             ix1 = i;
+        //             ix2 = surfaceM_N[i];
+        //         }
+        //     }
+        //     // after the loop, the smallest sum found
+        //     ans.push_back({nums1[ix1], nums2[ix2]});
+        //     ++surfaceM_N[ix1];
+        // }
+        // return ans;
+        int m = nums1.size();
+        int n = nums2.size();
+        vector<vector<int>> ans;
+        using T = tuple<int, int, int>;  // {sum, i, j}
+        priority_queue<T, vector<T>, greater<T>> minHeap;
+        // greater<T> for min_heap, auto compare the first elem in tuple
+        for (int i = 0; i < min(m, k); ++i) {
+            minHeap.push({nums1[i] + nums2[0], i, 0});
+        }
+        while (k-- && !minHeap.empty()) {
+            auto [sum, i, j] = minHeap.top();
+            minHeap.pop();
+            ans.push_back({nums1[i], nums2[j]});
+            if (j < n - 1) minHeap.push({nums1[i] + nums2[j + 1], i, j + 1});
+        }
+        return ans;
+        // take away:
+        // 1. Since this is a 2-D monotonicity, we can't find a definitive
+        // "direction" to search the matrix.
+        // 2. Use minHeap to be faster
+    }
 };
 
 int main() {
