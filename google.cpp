@@ -404,6 +404,33 @@ class HitCounter {
     }
 };
 
+class RandomizedSet {
+   private:
+    vector<int> vals;
+    unordered_map<int, int> mp;  // val: index
+
+   public:
+    RandomizedSet() {}
+
+    bool insert(int val) {
+        if (mp.contains(val)) return false;
+        vals.push_back(val);
+        mp[val] = vals.size() - 1;
+        return true;
+    }
+
+    bool remove(int val) {
+        if (!mp.contains(val)) return false;
+        mp[vals.back()] = mp[val];
+        swap(vals[mp[val]], vals[vals.size() - 1]);
+        vals.pop_back();
+        mp.erase(val);
+        return true;
+    }
+
+    int getRandom() { return vals[rand() % vals.size()]; }
+};
+
 class google {
    public:
     ListNode* deleteDuplicates_(ListNode* head) {
@@ -2294,6 +2321,52 @@ class google {
         // 1. Since this is a 2-D monotonicity, we can't find a definitive
         // "direction" to search the matrix.
         // 2. Use minHeap to be faster
+    }
+
+    int combinationSum4(vector<int>& nums, int target) {
+        int n = nums.size();
+        vector<unsigned int> dp(target + 1, 0);
+        dp[0] = 1;
+        for (int t = 1; t <= target; ++t) {
+            // fix the sum that we are building toward
+            for (int num : nums) {
+                // try every number as the last one added to permutation
+                if (t >= num) {
+                    // if this is the last number, in this very case, the
+                    // possibilities are dp[t-num], for the target t, increse
+                    // the total possibilities by such amount
+                    dp[t] += dp[t - num];
+                }
+            }
+        }
+        return (int)dp[target];
+        // take away:
+        // 1. Why dp on increasing target, not dp on expanding array?
+        // nums outer → "what items are in my pool?"    → order ignored
+        // (combinations)
+        // target outer → "what's the last item added?" → order tracked
+        // (permutations)
+        // 2. Number out, means number is a one way iteration, no back and
+        // forth, this prevent the "premutation" form happening. While target
+        // out, the number is checked again and again, it may appear at any
+        // position, that is exactly premutation.
+    }
+
+    vector<int> lexicalOrder(int n) {
+        vector<int> ans;
+        ans.reserve(n);
+        auto pushNumbers = [&](auto& self, int num) -> void {
+            // first push this number
+            if (num > n) return;
+            ans.push_back(num);
+            for (int nextDigit = 0; nextDigit <= 9; ++nextDigit) {
+                self(self, num * 10 + nextDigit);
+            }
+        };
+        for (int i = 1; i <= min(9, n); ++i) {
+            pushNumbers(pushNumbers, i);
+        }
+        return ans;
     }
 };
 
