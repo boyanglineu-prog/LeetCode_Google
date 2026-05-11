@@ -2368,13 +2368,137 @@ class google {
         }
         return ans;
     }
+
+    int maxRotateFunction(vector<int>& nums) {
+        // ROTATION IS MATH_ABLE
+        int n = nums.size();
+        int baseSum{};
+        int baseIncre{};
+        int mul{};
+        for (int num : nums) {
+            baseSum += mul++ * num;
+            baseIncre += num;
+        }
+        int maxAns = baseSum;
+        for (int i = 0; i < n - 1; ++i) {
+            baseSum += baseIncre - (n * nums[n - 1 - i]);
+            maxAns = max(maxAns, baseSum);
+        }
+        return maxAns;
+    }
+
+    string removeKdigits(string num, int k) {
+        // MONOTONIC STACK, ONE BY ONE
+        int n = num.size();
+        if (n == k) return "0";
+        string stack;
+        for (char c : num) {
+            // see how many digits can be replaced by this c
+            while (k > 0 && !stack.empty() && stack.back() > c) {
+                stack.pop_back();
+                --k;
+            }
+            stack.push_back(c);
+        }
+        // all digits added to stack now
+        // if still have quota, kick out
+        while (k-- > 0) stack.pop_back();
+        while (stack[0] == '0') stack.erase(0, 1);
+        if (stack.empty()) return "0";
+        return stack;
+        // int n = num.size();
+        // vector<int> digits(n, -1);
+        // for (int i = 0; i < n; ++i) digits[i] = num[i] - '0';
+        // int left{};
+        // while (k != 0) {
+        //     if (n - left == k) {
+        //         // all the remaining digits can be deleted;
+        //         for (int i = left; i < n; ++i) digits[i] = -1;
+        //         break;
+        //     }
+        //     int minVal = 10;
+        //     int minIdx = n;
+        //     for (int i = 0; i <= k; ++i) {
+        //         // starting from left, scan k + 1 positions
+        //         // find the smallest digit
+        //         if (digits[left + i] < minVal) {
+        //             minVal = digits[left + i];
+        //             minIdx = left + i;
+        //         }
+        //     }
+        //     // we find the smallest digits, we need to delete something
+        //     for (int j = left; j < minIdx; ++j) digits[j] = -1;
+        //     k -= minIdx - left;
+        //     left = minIdx + 1;
+        // }
+        // string ans = "";
+        // for (int d : digits) {
+        //     if (d == -1) continue;
+        //     ans += d + '0';
+        // }
+        // while (ans[0] == '0') ans.erase(0, 1);
+        // if (ans.size() == 0) return "0";
+        // return ans;
+        // take away:
+        // 1. My initial algorithm make it too complicated.
+        // To form a as-small-as-possible number, we need the front digits to be
+        // "asap". So we use the quota as front as possible. So greedyly kick
+        // out the larger digits as long as their is quota. So the flow is: scan
+        // the entire array, as long as have quota, replace greedily; if no
+        // quora, just add. After the scanning, trim the string.
+    }
+
+    vector<vector<int>> reconstructQueue(vector<vector<int>>& people) {
+        // AS CURTAIN IS FALLING DOWN, WE SEE MORE SHORTER GUYS
+        sort(people.begin(), people.end(),
+             [](const vector<int>& a, const vector<int>& b) {
+                 if (a[0] == b[0]) return a[1] < b[1];
+                 return a[0] > b[0];  // descending height
+             });
+        vector<vector<int>> ans;
+        for (auto& p : people)
+            ans.insert(ans.begin() + p[1], p);  // insert at index k
+        return ans;
+        // int n = people.size();
+        // auto cmp = [](vector<int> o1, vector<int> o2) -> bool {
+        //     if (o1[0] == o2[0]) return o1[1] < o2[1];
+        //     return o1[0] < o2[0];
+        // };
+        // sort(people.begin(), people.end(), cmp);
+        // vector<vector<int>> ans(n);
+        // vector<bool> occupied(n, false);
+        // int currentGroup = INT_MIN;
+        // vector<int> tempPos;
+        // for (auto v : people) {
+        //     if (v[0] != currentGroup) {
+        //         // new height coming
+        //         // wrap up last round, fill all the pos of prev round
+        //         for (int pos : tempPos) occupied[pos] = true;
+        //         tempPos.clear();
+        //         currentGroup = v[0];
+        //     }
+        //     int pos{};
+        //     int numSkips = v[1];  // [4,4]
+        //     while (numSkips) {
+        //         if (occupied[pos] == false) --numSkips;
+        //         ++pos;
+        //     }
+        //     while (occupied[pos]) ++pos;
+        //     // now, good pos found
+        //     ans[pos] = v;
+        //     tempPos.push_back(pos);
+        // }
+        // return ans;
+    }
 };
 
 int main() {
     cout << "Hello, world." << endl;
     vector<int> nums = {2, 3, -2, 4};
     google obj;
-    int k = obj.integerBreak(8);
-    cout << k << endl;
+    vector<vector<int>> people = {{7, 0}, {4, 4}, {7, 1},
+                                  {5, 0}, {6, 1}, {5, 2}};
+    vector<vector<int>> ans = obj.reconstructQueue(people);
+    cout << ans.size() << endl;
     return 0;
 }
