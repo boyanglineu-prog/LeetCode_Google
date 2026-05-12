@@ -1237,7 +1237,7 @@ class google {
         return build(build, 0, n - 1);
     }
 
-    vector<vector<int>> pathSum(TreeNode* root, int targetSum) {
+    vector<vector<int>> pathSum_0(TreeNode* root, int targetSum) {
         int sum{};
         vector<int> run;
         vector<vector<int>> ans;
@@ -2490,15 +2490,125 @@ class google {
         // }
         // return ans;
     }
+
+    bool canPartition(vector<int>& nums) {
+        // KNAPSACK, ITEMS OUTER, R->L
+        int total{};
+        for (int num : nums) total += num;
+        if (total % 2 == 1) return false;
+        int target = total / 2;
+        vector<bool> dp(target + 1, false);
+        dp[0] = true;
+        for (int num : nums) {
+            for (int t = target; t >= num; --t) {
+                dp[t] = dp[t] || dp[t - num];
+            }
+        }
+        return dp[target];
+        // int n = nums.size();
+        // int total{};
+        // sort(nums.begin(), nums.end());
+        // for (int num : nums) total += num;
+        // if (total % 2 == 1) return false;
+        // int target = total / 2;
+        // int sum{};
+        // auto bt = [&](auto& self, int i) -> bool {
+        //     if (sum == target) return true;
+        //     if (i >= n) return false;
+        //     if (nums[i] > target) return false;
+        //     sum += nums[i];
+        //     if (self(self, i + 1)) return true;
+        //     sum -= nums[i];
+        //     if (self(self, i + 1)) return true;
+        //     return false;
+        // };
+        // return bt(bt, 0);
+        // take away:
+        // 1. Back tracking TLE, of course.
+        // BT is for counting, but not for checking.
+    }
+
+    int eraseOverlapIntervals(vector<vector<int>>& intervals) {
+        int n = intervals.size();
+        if (n == 1) return 0;
+        sort(intervals.begin(), intervals.end(),
+             [](const vector<int>& o1, const vector<int>& o2) {
+                 return o1[0] < o2[0];
+             });
+        int fringe = intervals[0][1];  // current right end
+        int count{};
+        for (int i = 1; i < n; ++i) {
+            if (intervals[i][0] < fringe) {
+                // if overlap, keep the smaller end one
+                fringe = min(fringe, intervals[i][1]);
+                ++count;
+            } else {
+                fringe = intervals[i][1];
+            }
+        }
+        return count;
+    }
+
+    int pathSum(TreeNode* root, int targetSum) {
+        // BT + PREFIX, MAP CAN BE FASTER
+        vector<long long> prefixSum;
+        prefixSum.push_back(0);
+        int ans{};
+        auto count = [&]() -> void {
+            int n = prefixSum.size();
+            int r = n - 1;  // the end is fixed
+            for (int l = 0; l < n - 1; ++l) {
+                if (prefixSum[r] - prefixSum[l] == targetSum) ++ans;
+            }
+            return;
+        };
+        auto bt = [&](auto& self, TreeNode* node) -> void {
+            if (node == NULL) return;
+            // add this cal to prefix
+            prefixSum.push_back(prefixSum.back() + node->val);
+            // can this cal be the last elem in a path?
+            count();
+            self(self, node->left);
+            self(self, node->right);
+            prefixSum.pop_back();
+            return;
+        };
+        bt(bt, root);
+        return ans;
+        // take away:
+        // 1. cannot count after the leaf node, because some parent paths might
+        // be double counted. So for each node, ask "can this be the last elem"
+    }
+
+    int compress(vector<char>& chars) {
+        // TWO POINTERS
+        int n = chars.size();
+        int l{};
+        int r{};
+        int idx{};
+        while (r <= n) {  // including r == n, consolidate the end case
+            if (r == n || chars[r] != chars[l]) {
+                chars[idx++] = chars[l];
+                int count = r - l;
+                if (count != 1) {
+                    vector<int> digits;
+                    while (count != 0) {
+                        digits.push_back(count % 10);
+                        count /= 10;
+                    }
+                    for (int i = digits.size() - 1; i >= 0; --i)
+                        chars[idx++] = digits[i] + '0';
+                }
+                l = r;
+            }
+            ++r;
+        }
+        return idx;
+    }
 };
 
 int main() {
     cout << "Hello, world." << endl;
-    vector<int> nums = {2, 3, -2, 4};
     google obj;
-    vector<vector<int>> people = {{7, 0}, {4, 4}, {7, 1},
-                                  {5, 0}, {6, 1}, {5, 2}};
-    vector<vector<int>> ans = obj.reconstructQueue(people);
-    cout << ans.size() << endl;
     return 0;
 }
