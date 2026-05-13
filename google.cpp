@@ -2605,6 +2605,198 @@ class google {
         }
         return idx;
     }
+
+    bool sequenceReconstruction(vector<int>& nums,
+                                vector<vector<int>>& sequences) {
+        // DEPENDENCY, WHO IS THE LEADER?
+        int n = nums.size();
+        vector<vector<int>> graph(n + 1);
+        vector<int> indegree(n + 1, 0);
+        for (auto& seq : sequences) {
+            for (int i = 0; i + 1 < seq.size(); ++i) {
+                int u = seq[i];
+                int v = seq[i + 1];
+                graph[u].push_back(v);
+                // this is important, what I need to know, is if a node is
+                // freed, whose indegree will --? That's why use graph[u] rather
+                // then graph[v]
+                indegree[v]++;
+                // This is also important, I need to know the indegree of each
+                // node, but I don't need to know who exactly are they
+            }
+        }
+        queue<int> q;  // though a queue, expected to be only one item
+        for (int i = 1; i <= n; ++i) {
+            if (indegree[i] == 0) q.push(i);
+        }
+        while (!q.empty()) {
+            if (q.size() > 1) return false;  // not unique
+            int node = q.front();
+            q.pop();
+            for (int nei : graph[node]) {
+                if (--indegree[nei] == 0) q.push(nei);
+            }
+        }
+        for (int i = 1; i <= n; ++i) {
+            if (indegree[i] != 0) return false;
+        }
+        return true;
+        // take away:
+        // 1. track indegree, but no need to know who are they
+        // 2. use graph to track who are they
+        // int n = nums.size();
+        // vector<vector<bool>> depend(n + 1, vector<bool>(n + 1, false));
+        // vector<int> count(n + 1, 0);
+        // for (auto& v : sequences) {
+        //     for (int l = 0; l < v.size(); ++l) {
+        //         for (int r = l + 1; r < v.size(); ++r) {
+        //             if (depend[v[r]][v[l]] == false) {
+        //                 depend[v[r]][v[l]] = true;
+        //                 ++count[v[r]];
+        //             }
+        //         }
+        //     }
+        // }
+        // auto nextIndex = [&]() -> int {
+        //     // if good, return next index
+        //     // if multiple independent, return 0
+        //     // if no independent, return -1
+        //     int ans{};
+        //     bool already{};
+        //     for (int i = 1; i <= n; ++i) {
+        //         if (count[i] == 0) {
+        //             if (already) return 0;
+        //             ans = i;
+        //             already = true;
+        //         }
+        //     }
+        //     if (already) return ans;
+        //     return -1;
+        // };
+        // int next{};
+        // while ((next = nextIndex()) != -1) {
+        //     // this number is added to the final sequence
+        //     if (next == 0) return false;
+        //     // means too many independent, leads to un-unique
+        //     // else, good next
+        //     count[next] = -1;
+        //     // means that this number is done processing
+        //     for (int i = 1; i <= n; ++i) {
+        //         if (depend[i][next] == true) {
+        //             depend[i][next] = false;
+        //             count[i]--;
+        //         }
+        //     }
+        //     // remove this next from dependent
+        // }
+        // // done processing
+        // // check the count, if have unprocessed, no good, means cycle
+        // for (int i = 1; i <= n; ++i)
+        //     if (count[i] != -1) return false;
+        // return true;
+    }
+
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+        // STACK!!! + PREPEND!!!
+        stack<int> s1, s2;
+        while (l1) {
+            s1.push(l1->val);
+            l1 = l1->next;
+        }
+        while (l2) {
+            s2.push(l2->val);
+            l2 = l2->next;
+        }
+        int carry{};
+        ListNode* cur = NULL;
+        while (!s1.empty() || !s2.empty() || carry) {
+            int sum = carry;
+            if (!s1.empty()) {
+                sum += s1.top();
+                s1.pop();
+            }
+            if (!s2.empty()) {
+                sum += s2.top();
+                s2.pop();
+            }
+            ListNode* node = new ListNode();
+            node->val = sum % 10;
+            carry = sum /= 10;
+            node->next = cur;
+            cur = node;
+        }
+        return cur;
+        // vector<int> v1;
+        // vector<int> v2;
+        // ListNode* cur = l1;
+        // while (cur) {
+        //     v1.push_back(cur->val);
+        //     cur = cur->next;
+        // }
+        // cur = l2;
+        // while (cur) {
+        //     v2.push_back(cur->val);
+        //     cur = cur->next;
+        // }
+        // int n1 = v1.size();
+        // int n2 = v2.size();
+        // if (n1 == 1 && l1->val == 0) return l2;
+        // if (n2 == 1 && l2->val == 0) return l1;
+        // int n = max(n1, n2);
+        // vector<int> digits(n, 0);
+        // int carry{};
+        // for (int i = 0; i < n; ++i) {
+        //     int d1 = (i < n1) ? v1[n1 - 1 - i] : 0;
+        //     int d2 = (i < n2) ? v2[n2 - 1 - i] : 0;
+        //     int sum = carry + d1 + d2;
+        //     digits[n - 1 - i] = sum % 10;
+        //     carry = sum / 10;
+        // }
+        // ListNode* preRoot = new ListNode();
+        // cur = preRoot;
+        // if (carry == 1) {
+        //     cur->next = new ListNode();
+        //     cur = cur->next;
+        //     cur->val = carry;
+        //     cur->next = NULL;
+        // }
+        // for (int i = 0; i < n; ++i) {
+        //     cur->next = new ListNode();
+        //     cur = cur->next;
+        //     cur->val = digits[i];
+        //     cur->next = NULL;
+        // }
+        // return preRoot->next;
+    }
+
+    TreeNode* deleteNode(TreeNode* root, int key) {
+        // SWAP AND RECURSIVELY DELETE
+        // base case;
+        if (!root) return NULL;
+        if (key < root->val) {
+            // if on left branch
+            root->left = deleteNode(root->left, key);
+        } else if (key > root->val) {
+            // if on right branch
+            root->right = deleteNode(root->right, key);
+        } else {
+            // found the node
+            if (!root->left) return root->right;
+            if (!root->right) return root->left;
+            // else, if the root has both children
+            TreeNode* successor = root->right;
+            // go to the smallest of right child
+            // this will be the next number
+            while (successor->left) successor = successor->left;
+            root->val = successor->val;
+            root->right = deleteNode(root->right, successor->val);
+        }
+        return root;
+        // take away:
+        // 1. try utilize recursion, try NOT to track too many layers
+        // "RETURN ROOT IS THE KEY"
+        // 2. swap value with successor, then recursively delete successor
+    }
 };
 
 int main() {
