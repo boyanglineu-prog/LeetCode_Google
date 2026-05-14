@@ -2797,6 +2797,120 @@ class google {
         // "RETURN ROOT IS THE KEY"
         // 2. swap value with successor, then recursively delete successor
     }
+
+    int findMinArrowShots(vector<vector<int>>& points) {
+        // SORT + GREEDY
+        if (points.size() == 0) return 0;
+        if (points.size() == 1) return 1;
+        sort(points.begin(), points.end());
+        // use the first point (safe) to be the base case, avoid certain edge
+        // case
+        int left = points[0][0];
+        int right = points[0][1];
+        int count = 1;
+        for (auto& p : points) {
+            if (p[0] > right) {
+                // if out of the prev overlap area, a new arrow needed.
+                ++count;
+                left = p[0];
+                right = p[1];
+            } else {
+                // shrink the overalp interval
+                left = p[0];  // the vector is already sorted on the [0]
+                right = min(right, p[1]);
+            }
+        }
+        return count;
+        // take away:
+        // 1. this algorithm is greedy: I will use as few arrows as possible
+        // 2. left is never used, drop it
+    }
+
+    string validIPAddress(string queryIP) {
+        if (queryIP.find('.') != string::npos) {
+            // IPv4
+            vector<string> parts;
+            int l{};
+            int r{};
+            while (r < queryIP.size()) {
+                if (queryIP[r] >= 'a' && queryIP[r] <= 'z' ||
+                    queryIP[r] >= 'A' && queryIP[r] <= 'Z')
+                    return "Neither";
+                if (queryIP[r] == '.') {
+                    if (r - l == 0) return "Neither";
+                    if (r - l > 3) return "Neither";
+                    parts.push_back(queryIP.substr(l, r - l));
+                    l = r + 1;
+                }
+                ++r;
+            }
+            if (r - l == 0) return "Neither";
+            if (r - l > 3) return "Neither";
+            parts.push_back(queryIP.substr(l, r - l));
+            if (parts.size() != 4) return "Neither";
+            // all parts ready
+            for (auto& p : parts) {
+                if (p[0] == '0' && p.size() != 1) return "Neither";
+                int temp{};
+                for (char c : p) temp = temp * 10 + c - '0';
+                if (temp > 255) return "Neither";
+            }
+            return "IPv4";
+        } else {
+            // IPv6
+            vector<string> parts;
+            int l{};
+            int r{};
+            while (r < queryIP.size()) {
+                if (queryIP[r] == ':') {
+                    if (r - l == 0) return "Neither";
+                    if (r - l > 4) return "Neither";
+                    parts.push_back(queryIP.substr(l, r - l));
+                    l = r + 1;
+                }
+                ++r;
+            }
+            if (r - l == 0) return "Neither";
+            if (r - l > 4) return "Neither";
+            parts.push_back(queryIP.substr(l, r - l));
+            if (parts.size() != 8) return "Neither";
+            // all parts ready
+            for (auto& p : parts) {
+                for (char c : p) {
+                    if (c > 'f' && c <= 'z' || c > 'F' && c <= 'Z')
+                        return "Neither";
+                }
+            }
+            return "IPv6";
+        }
+        return "Neither";
+    }
+
+    vector<int> nextGreaterElements(vector<int>& nums) {
+        // MONOTONIC STACK IS GREAT FOR "NEXT BIGGER" QUESTIONS
+        int n = nums.size();
+        vector<int> ans(n, -1);
+        stack<int> indices;  // if a number is smaller than prev, it(index) will
+                             // be pushed into the stadk, as a result, the stadk
+                             // is monotonic small
+        for (int i = 0; i < 2 * n; ++i) {
+            // for  each number, check if it can free any previous numbers
+            while (!indices.empty()) {
+                // as long as the stack is not empty, which means there is some
+                // number haven't found next greater yet
+                if (nums[i % n] <= nums[indices.top()]) break;
+                // if greater
+                ans[indices.top()] = nums[i % n];
+                indices.pop();
+            }
+            // if this number has found his next greater, no need to add to
+            // stack
+            if (i < n) indices.push(i);
+        }
+        return ans;
+        // take away:
+        // 1. use i < 2 * n to achieve the circular, but need a extra check
+    }
 };
 
 int main() {
