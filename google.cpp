@@ -46,6 +46,25 @@ class Node {
     }
 };
 
+class Solution {
+   private:
+    vector<int> prefix;
+    int total;
+
+   public:
+    Solution(vector<int>& w) {
+        for (int wi : w) {
+            prefix.push_back((prefix.empty() ? 0 : prefix.back()) + wi);
+        }
+        total = prefix.back();
+    }
+
+    int pickIndex() {
+        int r = rand() % total + 1;  // [1, total]
+        return lower_bound(prefix.begin(), prefix.end(), r) - prefix.begin();
+    }
+};
+
 class MinStack {
    private:
     list<int> lst;
@@ -2910,6 +2929,57 @@ class google {
         return ans;
         // take away:
         // 1. use i < 2 * n to achieve the circular, but need a extra check
+    }
+
+    int change(int amount, vector<int>& coins) {
+        // KNAPSACK
+        vector<long long> dp(amount + 1, 0);
+        dp[0] = 1;
+        for (int coin : coins) {
+            for (int i = 1; i <= amount; ++i) {
+                if (coin <= i) dp[i] += dp[i - coin];
+            }
+        }
+        return dp[amount];
+        // take away:
+        // 1. knapsack:
+        // order doesn't matter->coins outer
+        // reuse allowed->l to r
+    }
+
+    int findUnsortedSubarray(vector<int>& nums) {
+        // FIND THE MASSY AREA IN THE MIDDLE, THEN EXPAND THE AREA
+        int n = nums.size();
+        int l = 0;
+        while (l < n - 1 && nums[l] <= nums[l + 1]) ++l;
+        // l is the last good pos
+        int r = n - 1;
+        while (r > 0 && nums[r - 1] <= nums[r]) --r;
+        // r is the last good pos
+        if (l >= r) return 0;  // already sorted
+        int subMin = INT_MAX;
+        int subMax = INT_MIN;
+        // inside bad area
+        for (int i = l; i <= r; ++i) {
+            subMin = min(subMin, nums[i]);
+            subMax = max(subMax, nums[i]);
+        }
+        // it is because, l not only need to be smaller than the bad area, it
+        // must also be smaller than the right good area, same for r. That is
+        // why when find subMin and subMax, the two edges of good area also need
+        // to be included.
+        while (l >= 0 && nums[l] > subMin) --l;
+        while (r < n && nums[r] < subMax) ++r;
+        // l and r are still at the good side
+        return r - l - 1;
+        // int n = nums.size();
+        // vector<int> copy(nums);
+        // sort(copy.begin(), copy.end());
+        // int l{};
+        // while (l < n && nums[l] == copy[l]) ++l;
+        // int r = n - 1;
+        // while (r >= 0 && nums[r] == copy[r]) --r;
+        // return max(0, r - l + 1);
     }
 };
 
