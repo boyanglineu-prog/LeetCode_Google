@@ -2,6 +2,7 @@
 #include <deque>
 #include <iostream>
 #include <list>
+#include <sstream>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
@@ -44,6 +45,38 @@ class Node {
         val = _val;
         neighbors = _neighbors;
     }
+};
+
+class MyCircularQueue {
+    // TRACK SIZE, NO TWO POINTERS
+   private:
+    vector<int> v;
+    int front, size, n;
+
+   public:
+    MyCircularQueue(int k) : v(k), front(0), size(0), n(k) {}
+
+    bool enQueue(int value) {
+        if (isFull()) return false;
+        v[(front + size) % n] = value;
+        ++size;
+        return true;
+    }
+
+    bool deQueue() {
+        if (isEmpty()) return false;
+        front = (front + 1) % n;
+        --size;
+        return true;
+    }
+
+    int Front() { return isEmpty() ? -1 : v[front]; }
+
+    int Rear() { return isEmpty() ? -1 : v[(front + size - 1) % n]; }
+
+    bool isEmpty() { return size == 0; }
+
+    bool isFull() { return size == n; }
 };
 
 class Solution {
@@ -2981,6 +3014,46 @@ class google {
         // while (r >= 0 && nums[r] == copy[r]) --r;
         // return max(0, r - l + 1);
     }
+
+    vector<int> exclusiveTime(int n, vector<string>& logs) {
+        // THIS SECOND BELONGS TO WHOM?
+        int id{};
+        bool status{};
+        int time{};
+        auto parse = [&](string& s) -> void {
+            stringstream ss(s);
+            string idStr, statusStr, timeStr;
+            getline(ss, idStr, ':');
+            getline(ss, statusStr, ':');
+            getline(ss, timeStr, ':');
+            id = stoi(idStr);
+            status = (statusStr == "start");
+            time = stoi(timeStr);
+        };
+        int prevTime{};
+        vector<int> ans(n, 0);
+        stack<int> stk;  // process ID
+        for (auto& log : logs) {
+            parse(log);
+            // proc, status, and time should be done
+            if (status == true) {  // "start"
+                // stack side:
+                // if the stack is not empty, increment the partial time
+                // interval for previous process;
+                // if the stack is empty, just push and update the time
+                if (!stk.empty()) ans[stk.top()] += time - prevTime;
+                stk.push(id);
+                prevTime = time;
+            } else {  // "end"
+                ans[id] += time - prevTime + 1;
+                stk.pop();
+                prevTime = time + 1;
+            }
+        }
+        return ans;
+    }
+
+    int widthOfBinaryTree(TreeNode* root) {}
 };
 
 int main() {
